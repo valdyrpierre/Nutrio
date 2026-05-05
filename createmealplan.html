@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="createmealplan.css">
+        <title>Nutrio - Create Meal Plan</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+            <p>Create a meal plan using your own preferences.</p>
+        </header>
+
+        <main>
+            <h2>Build Your Plan</h2>
+
+            <div class="card">
+                <div class="form-group">
+                    <label for="calorieGoal">Daily Calorie Goal</label>
+                    <input id="calorieGoal" type="number" min="800" max="5000" value="2000">
+                </div>
+
+                <div class="form-group">
+                    <label>Preferred Categories (optional)</label>
+                    <div id="categoryOptions" class="categories"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="excludeWords">Exclude foods containing keywords (optional)</label>
+                    <input id="excludeWords" type="text" placeholder="Example: pork, sugar, mayo">
+                </div>
+
+                <div class="actions">
+                    <button id="generateBtn" class="primary">Generate And Save Plan</button>
+                    <button id="clearBtn" class="secondary">Clear Saved Plan</button>
+                    <a class="back-link" href="mealplan.html">Back To Meal Plan</a>
+                </div>
+                <div id="status" class="status"></div>
+            </div>
+
+            <div class="card">
+                <h3>Preview</h3>
+                <div id="preview">No plan generated yet.</div>
+            </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+            const SUPABASE_URL = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            const statusEl = document.getElementById('status');
+            const previewEl = document.getElementById('preview');
+            const categoryOptionsEl = document.getElementById('categoryOptions');
+            let allFoods = [];
+
+            function setStatus(message, type = '') {
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`.trim();
+            }
+
+            function shuffle(items) {
+                const array = [...items];
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function scoreFood(food, mealType, targetPerMeal, preferredCategories) {
+                const calories = Number(food.calories) || 0;
+                const category = String(food.category || '').toLowerCase();
+                const calorieFit = Math.max(0, 200 - Math.abs(calories - targetPerMeal));
+
+                const mealTypeBoosts = {
+                    breakfast: ['fruits', 'grains', 'dairy'],
+                    lunch: ['proteins', 'vegetables', 'grains'],
+                    dinner: ['proteins', 'vegetables']
+                };
+
+                let score = calorieFit;
+                if (preferredCategories.includes(category)) score += 45;
+                if ((mealTypeBoosts[mealType] || []).includes(category)) score += 25;
+                score += Math.random() * 8;
+                return score;
+            }
+
+            function pickBestFood(candidates, usedIds, mealType, targetPerMeal, preferredCategories) {
+                const ranked = candidates
+                    .filter(food => !usedIds.has(String(food.id)))
+                    .map(food => ({ food, score: scoreFood(food, mealType, targetPerMeal, preferredCategories) }))
+                    .sort((a, b) => b.score - a.score);
+
+                return ranked.length > 0 ? ranked[0].food : null;
+            }
+
+            function renderPreview(plan) {
+                if (!plan || !Array.isArray(plan.meals) || plan.meals.length === 0) {
+                    previewEl.innerHTML = 'No plan generated yet.';
+                    return;
+                }
+
+                previewEl.innerHTML = plan.meals.map(meal => `
+                    <div class="preview-item">
+                        <h4>${meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)}: ${meal.name}</h4>
+                        <p>${meal.description}</p>
+                        <p>Calories: ${meal.calories}</p>
+                    </div>
+                `).join('');
+            }
+
+            function getSelectedCategories() {
+                return Array.from(document.querySelectorAll("input[name='categoryPick']:checked"))
+                    .map(input => input.value.toLowerCase());
+            }
+
+            function getExcludeKeywords() {
+                return document.getElementById('excludeWords').value
+                    .split(',')
+                    .map(value => value.trim().toLowerCase())
+                    .filter(Boolean);
+            }
+
+            function buildPlanFromInput() {
+                const calorieGoal = Number(document.getElementById('calorieGoal').value) || 2000;
+                const preferredCategories = getSelectedCategories();
+                const excludeKeywords = getExcludeKeywords();
+
+                let candidates = [...allFoods];
+
+                if (preferredCategories.length > 0) {
+                    candidates = candidates.filter(food => preferredCategories.includes(String(food.category || '').toLowerCase()));
+                }
+
+                if (excludeKeywords.length > 0) {
+                    candidates = candidates.filter(food => {
+                        const haystack = `${String(food.name || '').toLowerCase()} ${String(food.category || '').toLowerCase()}`;
+                        return !excludeKeywords.some(keyword => haystack.includes(keyword));
+                    });
+                }
+
+                if (candidates.length < 3) {
+                    candidates = allFoods;
+                }
+
+                if (candidates.length < 3) {
+                    throw new Error('Not enough foods in database to build a plan.');
+                }
+
+                const targetPerMeal = Math.max(250, Math.round(calorieGoal / 3));
+                const usedIds = new Set();
+                const mealTypes = ['breakfast', 'lunch', 'dinner'];
+                const meals = [];
+
+                for (const mealType of mealTypes) {
+                    const chosen = pickBestFood(candidates, usedIds, mealType, targetPerMeal, preferredCategories);
+                    if (!chosen) {
+                        throw new Error('Could not find enough distinct foods for your plan.');
+                    }
+                    usedIds.add(String(chosen.id));
+                    meals.push({
+                        id: chosen.id,
+                        name: chosen.name,
+                        calories: Number(chosen.calories) || 0,
+                        description: `Category: ${chosen.category || 'General'}`,
+                        mealType,
+                        recommendationReason: preferredCategories.length > 0
+                            ? 'matches your selected categories and calorie goal'
+                            : 'fits your calorie goal'
+                    });
+                }
+
+                return {
+                    createdAt: new Date().toISOString(),
+                    recommendedCalories: calorieGoal,
+                    meals,
+                    preferredCategories,
+                    excludeKeywords
+                };
+            }
+
+            async function fetchFoods() {
+                setStatus('Loading food options...');
+                const { data, error } = await supabaseClient
+                    .from('foods')
+                    .select('id,name,calories,category')
+                    .order('name', { ascending: true })
+                    .limit(500);
+
+                if (error) {
+                    throw error;
+                }
+
+                allFoods = data || [];
+                if (allFoods.length === 0) {
+                    throw new Error('No foods found. Seed your foods table first.');
+                }
+
+                const categories = [...new Set(allFoods.map(food => String(food.category || '').trim()).filter(Boolean))]
+                    .sort((a, b) => a.localeCompare(b));
+
+                categoryOptionsEl.innerHTML = categories.map(category => `
+                    <label>
+                        <input type="checkbox" name="categoryPick" value="${category}">
+                        ${category}
+                    </label>
+                `).join('');
+
+                setStatus('Food options loaded. Choose your inputs and generate your plan.');
+            }
+
+            async function generateAndSave() {
+                try {
+                    const plan = buildPlanFromInput();
+                    localStorage.setItem('nutrioCustomMealPlan', JSON.stringify(plan));
+                    localStorage.setItem('recommendedCalories', String(plan.recommendedCalories));
+                    renderPreview(plan);
+                    setStatus('Plan saved. Redirecting to meal plan page...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'mealplan.html';
+                    }, 700);
+                } catch (error) {
+                    setStatus(error.message || 'Could not build meal plan.', 'error');
+                }
+            }
+
+            function clearSavedPlan() {
+                localStorage.removeItem('nutrioCustomMealPlan');
+                setStatus('Saved custom plan cleared.', 'success');
+                previewEl.innerHTML = 'No plan generated yet.';
+            }
+
+            document.getElementById('generateBtn').addEventListener('click', generateAndSave);
+            document.getElementById('clearBtn').addEventListener('click', clearSavedPlan);
+
+            (async () => {
+                try {
+                    const accessToken = localStorage.getItem('nutrioToken');
+                    const refreshToken = localStorage.getItem('nutrioRefreshToken');
+                    if (accessToken) {
+                        await supabaseClient.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken || ''
+                        });
+                    }
+                    await fetchFoods();
+                    const existingPlanRaw = localStorage.getItem('nutrioCustomMealPlan');
+                    if (existingPlanRaw) {
+                        renderPreview(JSON.parse(existingPlanRaw));
+                    }
+                } catch (error) {
+                    setStatus(error.message || 'Failed to initialize page.', 'error');
+                }
+            })();
+        </script>
+    </body>
+</html>

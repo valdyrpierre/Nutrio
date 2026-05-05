@@ -1,0 +1,523 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Full Page Shimmer Effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    animation: fullPageShimmer 4s infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes fullPageShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Header Styles with Enhanced Shimmer */
+header {
+    background: linear-gradient(135deg, #2c3e50, #1a1a1a);
+    color: #ffffff;
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Header Shimmer Effect */
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.15), transparent);
+    animation: headerShimmer 3s infinite;
+    z-index: 1;
+}
+
+@keyframes headerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure header content is above shimmer */
+header > * {
+    position: relative;
+    z-index: 2;
+}
+
+header h1 {
+    font-size: 3rem;
+    color: #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    from {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(76, 175, 80, 0.3);
+    }
+    to {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(76, 175, 80, 0.5);
+    }
+}
+
+header img {
+    width: 150px;
+    height: auto;
+    margin: 20px 0;
+    border: 3px solid #4CAF50;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+}
+
+header img:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+header p {
+    font-size: 1.3em;
+    margin-top: 15px;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+/* Main Content with Enhanced Background */
+main {
+    flex: 1;
+    padding: 40px 20px;
+    background: linear-gradient(45deg, #1a1a1a, #2c3e50);
+    position: relative;
+    overflow: hidden;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Main Section Shimmer */
+main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 152, 0, 0.1), transparent);
+    animation: mainShimmer 5s infinite;
+    z-index: 1;
+}
+
+@keyframes mainShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure main content is above shimmer */
+main > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Features Section */
+.features {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(33, 46, 59, 0.9));
+    margin: 30px 0;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Features Section Shimmer */
+.features::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FF9800, #F57C00, #FF9800);
+    background-size: 200% 100%;
+    animation: gradient-flow 3s ease-in-out infinite;
+}
+
+@keyframes gradient-flow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Introduction Section */
+.introduction {
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(33, 46, 59, 0.9));
+    padding: 50px 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    margin: 30px 0;
+    position: relative;
+    overflow: hidden;
+    text-align: center; /* Center all content in introduction section */
+}
+
+/* Introduction Section Shimmer */
+.introduction::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4CAF50, #45a049, #4CAF50);
+    background-size: 200% 100%;
+    animation: gradient-flow 3s ease-in-out infinite;
+}
+
+.introduction h2 {
+    font-size: 2.5rem;
+    color: #4CAF50;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.introduction p {
+    font-size: 1.2rem;
+    color: #ffffff;
+    margin-bottom: 20px;
+    text-align: center;
+    opacity: 0.9;
+}
+
+/* Benefits Form/List Styling */
+.benefits {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(69, 160, 73, 0.1));
+    padding: 30px;
+    border-radius: 15px;
+    margin: 30px 0;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    position: relative;
+    overflow: hidden;
+    text-align: left; /* Benefits list items align left for readability */
+}
+
+.benefits::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+    animation: benefitsShimmer 4s infinite;
+    z-index: 1;
+}
+
+@keyframes benefitsShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+.benefits ul {
+    list-style: none;
+    position: relative;
+    z-index: 2;
+}
+
+.benefits li {
+    font-size: 1.1rem;
+    color: #ffffff;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(69, 160, 73, 0.2));
+    border-radius: 10px;
+    border-left: 4px solid #4CAF50;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.benefits li::before {
+    content: '✓';
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #4CAF50;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.benefits li:hover {
+    transform: translateX(10px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+/* Button Container for Centering */
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+}
+
+/* Enhanced Button Styles */
+button {
+    padding: 15px 35px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    min-width: 180px;
+    position: relative;
+    overflow: hidden;
+    margin: 15px auto; /* Center buttons with auto margins */
+    display: block; /* Make buttons block-level for centering */
+}
+
+/* Button Shimmer Effect */
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+/* Calorie Goal Button */
+button[onclick*="guestcaloriegoal"] {
+    background: linear-gradient(45deg, #FF9800, #F57C00);
+    color: white;
+    font-size: 1.2rem;
+    padding: 20px 40px;
+}
+
+button[onclick*="guestcaloriegoal"]:hover {
+    background: linear-gradient(45deg, #F57C00, #EF6C00);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+}
+
+/* Sign Up Button */
+button[onclick*="createaccount"] {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    font-size: 1.2rem;
+    padding: 18px 40px;
+    margin: 20px auto; /* Extra margin and auto centering */
+}
+
+button[onclick*="createaccount"]:hover {
+    background: linear-gradient(45deg, #45a049, #3d8b40);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+}
+
+/* Footer Styles with Shimmer */
+footer {
+    background: linear-gradient(135deg, #212121, #2c3e50);
+    color: #ffffff;
+    text-align: center;
+    padding: 30px 20px;
+    position: relative;
+    width: 100%;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+/* Footer Shimmer */
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+    animation: footerShimmer 6s infinite;
+    z-index: 1;
+}
+
+@keyframes footerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure footer content is above shimmer */
+footer > * {
+    position: relative;
+    z-index: 2;
+}
+
+footer p {
+    color: #cccccc;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+    }
+    
+    header img {
+        width: 120px;
+    }
+    
+    .introduction h2 {
+        font-size: 2rem;
+    }
+    
+    .benefits li {
+        font-size: 1rem;
+        padding: 12px;
+    }
+    
+    button {
+        width: 100%;
+        max-width: 300px;
+        margin: 10px auto;
+    }
+    
+    main {
+        padding: 20px 15px;
+    }
+    
+    .features, .introduction {
+        padding: 30px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 30px 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    header img {
+        width: 100px;
+    }
+    
+    .introduction h2 {
+        font-size: 1.8rem;
+    }
+    
+    .introduction p {
+        font-size: 1rem;
+    }
+    
+    .benefits {
+        padding: 20px 15px;
+    }
+    
+    .benefits li {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+    
+    button {
+        font-size: 1rem;
+        padding: 15px 25px;
+        width: 100%;
+        max-width: 280px;
+    }
+}
+
+/* Add smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced Page Load Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    animation: fadeIn 0.8s ease-in;
+}
+
+/* Section Slide-in Animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.features {
+    animation: slideInUp 1s ease-out 0.2s both;
+}
+
+.introduction {
+    animation: slideInUp 1s ease-out 0.4s both;
+}
+
+

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrio - Food Preference Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            animation: pageShimmer 4s infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        @keyframes pageShimmer {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        /* Header */
+        header {
+            background-color: #1a1a1a;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #4CAF50;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(76,175,80,0.12), transparent);
+            animation: headerMove 3s infinite;
+            z-index: 1;
+        }
+
+        @keyframes headerMove {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        header > * { position: relative; z-index: 2; }
+
+        header h1 {
+            font-size: 2.4rem;
+            color: #4CAF50;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            animation: textGlow 2.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            from { text-shadow: 0 0 8px rgba(76,175,80,0.3); }
+            to   { text-shadow: 0 0 16px rgba(76,175,80,0.6); }
+        }
+
+        header img {
+            width: 125px;
+            height: auto;
+            margin: 12px 0;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        header img:hover { transform: scale(1.08) rotate(3deg); }
+
+        header p { font-size: 1rem; color: #bbbbbb; margin-top: 8px; }
+
+        /* Main */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 25px 20px 50px;
+            position: relative;
+        }
+
+        main h2 {
+            font-size: 2rem;
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        /* Panel cards */
+        .panel {
+            background-color: #1a1a1a;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4CAF50, #45a049, #4CAF50);
+            background-size: 200% 100%;
+            animation: topBorder 3s ease-in-out infinite;
+        }
+
+        @keyframes topBorder {
+            0%, 100% { background-position: 0% 50%; }
+            50%       { background-position: 100% 50%; }
+        }
+
+        .panel h3 {
+            color: #FFD700;
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+        }
+
+        .user-label {
+            font-size: 0.95rem;
+            color: #bbbbbb;
+            margin-bottom: 14px;
+        }
+
+        .user-label span { color: #4CAF50; font-weight: bold; }
+
+        /* Food grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .food {
+            background-color: #0f0f0f;
+            border: 1px solid #333;
+            border-left: 4px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .food:has(input:checked) {
+            border-left-color: #4CAF50;
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76,175,80,0.25);
+        }
+
+        .food:hover { transform: translateX(4px); }
+
+        .food h3 {
+            color: #ffffff;
+            font-size: 0.95rem;
+            margin: 6px 0 4px;
+        }
+
+        .meta { font-size: 0.85rem; color: #888888; margin-bottom: 6px; }
+
+        .food small { color: #666666; font-size: 0.8rem; }
+
+        .food input[type="checkbox"] { accent-color: #4CAF50; }
+
+        /* Buttons */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.85; }
+
+        .btn-primary { background-color: #4CAF50; color: #000; }
+
+        .btn-secondary {
+            background-color: #1a1a1a;
+            color: #cccccc;
+            border: 1px solid #444;
+        }
+
+        .btn-skip {
+            background-color: transparent;
+            color: #888888;
+            border: 1px solid #333;
+            font-weight: normal;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .btn-skip:hover { color: #cccccc; border-color: #666; }
+
+        /* Status */
+        .status {
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #cccccc;
+        }
+
+        .status.error   { color: #f44336; }
+        .status.success { color: #4CAF50; }
+
+        /* Popular list */
+        .popular { padding-left: 20px; }
+
+        .popular li {
+            margin: 10px 0;
+            color: #cccccc;
+            line-height: 1.5;
+        }
+
+        .popular li::marker { color: #4CAF50; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.8rem; }
+            main h2   { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Nutrio</h1>
+        <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+        <p>Help us personalise your meal plan by picking your favourite foods.</p>
+    </header>
+
+    <main>
+        <h2>🤖 Food Preference Training</h2>
+
+        <div class="panel">
+            <div class="user-label">Logged in as: <span id="userLabel"></span></div>
+            <p style="color:#bbbbbb;margin-bottom:10px">
+                We loaded 10 random foods from our database. Pick your <strong style="color:#FFD700">top 3</strong> — we'll use them to suggest better meals for you.
+            </p>
+            <div class="grid" id="foodsGrid"></div>
+            <div class="actions">
+                <button class="btn-primary" id="submitBtn">✅ Save Top 3</button>
+                <button class="btn-secondary" id="reloadBtn">🔄 Load New 10 Foods</button>
+                <a href="mealplan.html" class="btn-skip">Don't want to answer questions — take me to create meal plan</a>
+            </div>
+            <div class="status" id="statusMsg"></div>
+        </div>
+
+        <div class="panel">
+            <h3>🏆 Most Selected Foods</h3>
+            <p style="color:#888888;margin-bottom:12px">These foods are used as strong suggestions when building your meal plan.</p>
+            <ol class="popular" id="popularList"></ol>
+        </div>
+    </main>
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // ── Supabase setup (same credentials as rest of the site) ──
+    const SUPABASE_URL     = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Restore session so user_id is available
+    async function restoreSession() {
+        try {
+            const access  = localStorage.getItem('nutrioToken');
+            const refresh = localStorage.getItem('nutrioRefreshToken');
+            if (access) {
+                await db.auth.setSession({ access_token: access, refresh_token: refresh || '' });
+            }
+        } catch (error) {
+            console.error('Session restore failed:', error);
+            setStatus('Could not restore session. You can still browse foods, but saving requires login.', 'error');
+        }
+    }
+
+    function getCurrentUserId() {
+        const user = JSON.parse(localStorage.getItem('nutrioUser') || 'null');
+        return (user && user.id) ? user.id : null;
+    }
+
+    // ── DOM refs ──
+    const userLabel  = document.getElementById('userLabel');
+    const foodsGrid  = document.getElementById('foodsGrid');
+    const statusMsg  = document.getElementById('statusMsg');
+    const submitBtn  = document.getElementById('submitBtn');
+    const reloadBtn  = document.getElementById('reloadBtn');
+    const popularList = document.getElementById('popularList');
+
+    const uid = getCurrentUserId();
+    userLabel.textContent = uid ? uid : 'Guest (not logged in)';
+
+    function setStatus(message, type = '') {
+        statusMsg.textContent = message;
+        statusMsg.className = ('status ' + type).trim();
+    }
+
+    function formatError(error, fallbackPrefix) {
+        const message = (error && error.message) ? error.message : String(error || 'Unknown error');
+
+        if (/failed to fetch|networkerror|network request failed/i.test(message)) {
+            const protocolHint = window.location.protocol === 'file:'
+                ? ' Open this page through a local server (for example VS Code Live Server) instead of file://.'
+                : '';
+            return `Network error while contacting Supabase.${protocolHint} Check your internet and try again.`;
+        }
+
+        return `${fallbackPrefix}: ${message}`;
+    }
+
+    function selectedFoodIds() {
+        return Array.from(document.querySelectorAll("input[name='foodPick']:checked"))
+            .map(input => Number(input.value));
+    }
+
+    // Shuffle helper – Fisher-Yates
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // ── Load 50 foods from Supabase, display 10 random ones ──
+    async function loadFoods() {
+        setStatus('Loading random foods...');
+        foodsGrid.innerHTML = '';
+
+        try {
+            const { data, error } = await db
+                .from('foods')
+                .select('id, name, calories, category')
+                .limit(50);
+
+            if (error) {
+                setStatus(formatError(error, 'Could not load foods'), 'error');
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                setStatus('No foods found in the database.', 'error');
+                return;
+            }
+
+            const display = shuffle(data).slice(0, 10);
+
+            display.forEach(food => {
+                const card = document.createElement('label');
+                card.className = 'food';
+                card.innerHTML = `
+                    <input type="checkbox" name="foodPick" value="${food.id}" />
+                    <h3>${food.name}</h3>
+                    <div class="meta">${food.category} &bull; ${food.calories} cal</div>
+                    <small>Pick this if you would like to see it in meal plans.</small>
+                `;
+                foodsGrid.appendChild(card);
+            });
+
+            document.querySelectorAll("input[name='foodPick']").forEach(input => {
+                input.addEventListener('change', () => {
+                    const picks = selectedFoodIds();
+                    if (picks.length > 3) {
+                        input.checked = false;
+                        setStatus('You can only select 3 foods.', 'error');
+                    } else {
+                        setStatus(picks.length + '/3 selected');
+                    }
+                });
+            });
+
+            setStatus('Select your top 3 foods.');
+        } catch (error) {
+            console.error('loadFoods failed:', error);
+            setStatus(formatError(error, 'Could not load foods'), 'error');
+        }
+    }
+
+    // ── Save top 3 picks to Supabase food_preferences table ──
+    async function saveTopThree() {
+        if (!uid) {
+            setStatus('You must be logged in to save picks.', 'error');
+            return;
+        }
+
+        const picks = selectedFoodIds();
+        if (picks.length !== 3) {
+            setStatus('Please select exactly 3 foods.', 'error');
+            return;
+        }
+
+        setStatus('Saving your picks...');
+
+        const rows = picks.map(food_id => ({ user_id: uid, food_id }));
+
+        try {
+            const { error } = await db
+                .from('food_preferences')
+                .insert(rows);
+
+            if (error) {
+                setStatus(formatError(error, 'Could not save'), 'error');
+                return;
+            }
+
+            setStatus('Saved! Your picks will improve your meal plan suggestions. Redirecting to Meal Plan...', 'success');
+            await loadPopularFoods();
+            setTimeout(() => {
+                window.location.href = 'mealplan.html';
+            }, 700);
+        } catch (error) {
+            console.error('saveTopThree failed:', error);
+            setStatus(formatError(error, 'Could not save'), 'error');
+        }
+    }
+
+    // ── Load most selected foods (global, all users) ──
+    async function loadPopularFoods() {
+        popularList.innerHTML = '';
+
+        try {
+            // Fetch all picks joined to foods, then count in JS
+            const { data, error } = await db
+                .from('food_preferences')
+                .select('food_id, foods(id, name, category, calories)');
+
+            if (error) {
+                const li = document.createElement('li');
+                li.textContent = formatError(error, 'Could not load popular foods');
+                popularList.appendChild(li);
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'No selections yet. Submit picks to start building suggestions.';
+                popularList.appendChild(li);
+                return;
+            }
+
+            // Count how many times each food was picked
+            const counts = {};
+            const foodInfo = {};
+            data.forEach(row => {
+                const id = row.food_id;
+                counts[id] = (counts[id] || 0) + 1;
+                if (row.foods) foodInfo[id] = row.foods;
+            });
+
+            const sorted = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            sorted.forEach(([food_id, count]) => {
+                const f = foodInfo[food_id];
+                const li = document.createElement('li');
+                li.textContent = f
+                    ? `${f.name} (${f.category}, ${f.calories} cal) - selected ${count} time${count > 1 ? 's' : ''}`
+                    : `Food #${food_id} - selected ${count} time${count > 1 ? 's' : ''}`;
+                popularList.appendChild(li);
+            });
+        } catch (error) {
+            console.error('loadPopularFoods failed:', error);
+            const li = document.createElement('li');
+            li.textContent = formatError(error, 'Could not load popular foods');
+            popularList.appendChild(li);
+        }
+    }
+
+    submitBtn.addEventListener('click', saveTopThree);
+    reloadBtn.addEventListener('click', loadFoods);
+
+    async function initTrainingPage() {
+        await restoreSession();
+        await loadFoods();
+        await loadPopularFoods();
+    }
+
+    initTrainingPage();
+</script>
+</html>

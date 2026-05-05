@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="logfood.css">
+        <title>Nutrio - Log Food</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="a picture of nutrio logo">
+            <p>Healthy eating made easy. Your ultimate food tracker awaits</p>
+        </header>
+
+        <main>
+            <section class="log-food">
+                <h2>📝 Log Your Food</h2>
+                
+                <form id="log-food-form">
+                    <!-- Food Search Section -->
+                    <div class="form-group">
+                        <label for="food-search">🔍 Search Food:</label>
+                        <input type="text" id="food-search" name="food-search" placeholder="Type food name to search..." autocomplete="off" required>
+                        <div id="search-results" class="search-results"></div>
+                    </div>
+
+                    <!-- Selected Food Display -->
+                    <div id="selected-food" class="selected-food" style="display: none;">
+                        <h3>✅ Selected Food:</h3>
+                        <div id="food-details"></div>
+                    </div>
+
+                    <!-- Portion Size -->
+                    <div class="form-group">
+                        <label for="portion-size">⚖️ Portion Size:</label>
+                        <input type="number" id="portion-size" name="portion-size" placeholder="Enter portion size..." min="0.1" step="0.1" required>
+                        <span id="portion-unit">servings</span>
+                    </div>
+
+                    <!-- Meal Type -->
+                    <div class="form-group">
+                        <label for="meal-type">🍽️ Meal Type:</label>
+                        <select id="meal-type" name="meal-type" required>
+                            <option value="">Select meal type...</option>
+                            <option value="breakfast">🌅 Breakfast</option>
+                            <option value="lunch">🍽️ Lunch</option>
+                            <option value="dinner">🌙 Dinner</option>
+                            <option value="snack">🍪 Snack</option>
+                        </select>
+                    </div>
+
+                    <!-- Total Calories Display -->
+                    <div id="total-calories" class="total-calories" style="display: none;">
+                        <p>🔥 Total Calories: <span id="calories-display">0</span></p>
+                    </div>
+
+                    <button type="submit" id="log-btn" disabled>📊 Log Food</button>
+                </form>
+
+                <!-- Add New Food Section -->
+                <div id="add-new-food" class="add-new-food" style="display: none;">
+                    <h3>➕ Add New Food to Database</h3>
+                    <form id="new-food-form">
+                        <div class="form-group">
+                            <label for="new-food-name">Food Name:</label>
+                            <input type="text" id="new-food-name" name="new-food-name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new-food-calories">Calories per serving:</label>
+                            <input type="number" id="new-food-calories" name="new-food-calories" min="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new-food-category">Category:</label>
+                            <select id="new-food-category" name="new-food-category" required>
+                                <option value="">Select category...</option>
+                                <option value="fruits">🍎 Fruits</option>
+                                <option value="vegetables">🥕 Vegetables</option>
+                                <option value="proteins">🍗 Proteins</option>
+                                <option value="grains">🍞 Grains</option>
+                                <option value="dairy">🥛 Dairy</option>
+                                <option value="snacks">🍪 Snacks</option>
+                                <option value="beverages">🥤 Beverages</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit">➕ Add to Database</button>
+                        <button type="button" id="cancel-new-food">❌ Cancel</button>
+                    </form>
+                </div>
+
+                <!-- Message area -->
+                <div id="message-area"></div>
+            </section>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+            const SUPABASE_URL = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Restore Supabase auth session from tokens saved during login
+            (async () => {
+                const accessToken = localStorage.getItem('nutrioToken');
+                const refreshToken = localStorage.getItem('nutrioRefreshToken');
+                if (accessToken) {
+                    await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || ''
+                    });
+                }
+            })();
+
+            let selectedFood = null;
+            let searchTimeout = null;
+
+            // Initialize page
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Log food page loaded successfully!');
+                document.getElementById('food-search').focus();
+            });
+
+            // Search food in database as user types
+            document.getElementById('food-search').addEventListener('input', function() {
+                const searchTerm = this.value.trim();
+                
+                // Clear previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                // Hide selected food and results if search is empty
+                if (searchTerm.length === 0) {
+                    hideSearchResults();
+                    hideSelectedFood();
+                    return;
+                }
+                
+                // Search after user stops typing (300ms delay)
+                searchTimeout = setTimeout(() => {
+                    searchFoodInDatabase(searchTerm);
+                }, 300);
+            });
+
+            // Search food in database
+            async function searchFoodInDatabase(searchTerm) {
+                showSearchLoading();
+                
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('foods')
+                        .select('id,name,calories,category')
+                        .ilike('name', `%${searchTerm}%`)
+                        .order('name', { ascending: true })
+                        .limit(20);
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    displaySearchResults(data || [], searchTerm);
+                } catch (error) {
+                    console.error('Error searching foods:', error);
+                    displaySearchError('Unable to search foods. Please try again.');
+                }
+            }
+
+            // Display search results
+            function displaySearchResults(foods, searchTerm) {
+                const resultsDiv = document.getElementById('search-results');
+                
+                if (foods.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="no-results">
+                            <p>😕 No foods found for "${searchTerm}"</p>
+                            <button type="button" id="add-new-btn" onclick="showAddNewFood('${searchTerm}')">
+                                ➕ Add "${searchTerm}" to database
+                            </button>
+                        </div>
+                    `;
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+                
+                let html = '<div class="search-list">';
+                foods.forEach(food => {
+                    html += `
+                        <div class="food-item" onclick="selectFood(${JSON.stringify(food).replace(/"/g, '&quot;')})">
+                            <div class="food-info">
+                                <h4>${food.name}</h4>
+                                <p>🔥 ${food.calories} calories per serving</p>
+                                <p class="food-category">📂 ${food.category || 'General'}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                resultsDiv.innerHTML = html;
+                resultsDiv.style.display = 'block';
+            }
+
+            // Select a food from search results
+            function selectFood(food) {
+                selectedFood = food;
+                
+                // Update search input
+                document.getElementById('food-search').value = food.name;
+                
+                // Hide search results
+                hideSearchResults();
+                
+                // Show selected food details
+                showSelectedFood(food);
+                
+                // Enable portion size input
+                document.getElementById('portion-size').focus();
+            }
+
+            // Show selected food details
+            function showSelectedFood(food) {
+                const selectedDiv = document.getElementById('selected-food');
+                const detailsDiv = document.getElementById('food-details');
+                
+                detailsDiv.innerHTML = `
+                    <div class="selected-food-info">
+                        <h4>${food.name}</h4>
+                        <p>🔥 ${food.calories} calories per serving</p>
+                        <p>📂 Category: ${food.category || 'General'}</p>
+                    </div>
+                `;
+                
+                selectedDiv.style.display = 'block';
+                
+                // Enable form submission
+                updateLogButton();
+                
+                // Calculate calories when portion changes
+                calculateTotalCalories();
+            }
+
+            // Calculate total calories based on portion size
+            function calculateTotalCalories() {
+                if (!selectedFood) return;
+                
+                const portionSize = parseFloat(document.getElementById('portion-size').value) || 0;
+                const totalCalories = Math.round(selectedFood.calories * portionSize);
+                
+                document.getElementById('calories-display').textContent = totalCalories;
+                document.getElementById('total-calories').style.display = portionSize > 0 ? 'block' : 'none';
+            }
+
+            // Update portion calculation when portion size changes
+            document.getElementById('portion-size').addEventListener('input', calculateTotalCalories);
+
+            // Update log button state
+            function updateLogButton() {
+                const logBtn = document.getElementById('log-btn');
+                const portionSize = document.getElementById('portion-size').value;
+                const mealType = document.getElementById('meal-type').value;
+                
+                logBtn.disabled = !(selectedFood && portionSize && mealType);
+            }
+
+            // Listen for form changes
+            document.getElementById('portion-size').addEventListener('input', updateLogButton);
+            document.getElementById('meal-type').addEventListener('change', updateLogButton);
+
+            // Handle main form submission
+            document.getElementById('log-food-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                if (!selectedFood) {
+                    showMessage('Please select a food item first!', 'error');
+                    return;
+                }
+                
+                const portionSize = parseFloat(document.getElementById('portion-size').value);
+                const mealType = document.getElementById('meal-type').value;
+                const totalCalories = Math.round(selectedFood.calories * portionSize);
+                
+                logFoodToDatabase(selectedFood, portionSize, mealType, totalCalories);
+            });
+
+            // Log food to database
+            async function logFoodToDatabase(food, portionSize, mealType, totalCalories) {
+                showLoading();
+                
+                try {
+                    const logData = {
+                        foodId: food.id,
+                        foodName: food.name,
+                        portionSize: portionSize,
+                        mealType: mealType,
+                        totalCalories: totalCalories,
+                        dateLogged: new Date().toISOString(),
+                        userId: getUserId()
+                    };
+                    
+                    const { error } = await supabaseClient
+                        .from('food_logs')
+                        .insert([
+                            {
+                                user_id: logData.userId,
+                                food_id: logData.foodId,
+                                food_name: logData.foodName,
+                                portion_size: logData.portionSize,
+                                meal_type: logData.mealType,
+                                total_calories: logData.totalCalories,
+                                logged_at: logData.dateLogged
+                            }
+                        ]);
+
+                    if (!error) {
+                        showMessage(`✅ Logged: ${food.name} (${totalCalories} calories)`, 'success');
+                        clearForm();
+                        updateDailyCalories(totalCalories);
+                    } else {
+                        throw error || new Error('Failed to log food');
+                    }
+                } catch (error) {
+                    console.error('Error logging food:', error);
+                    showMessage('❌ Failed to log food. Please try again.', 'error');
+                }
+                
+                hideLoading();
+            }
+
+            // Show add new food form
+            function showAddNewFood(searchTerm) {
+                document.getElementById('new-food-name').value = searchTerm;
+                document.getElementById('add-new-food').style.display = 'block';
+                document.getElementById('new-food-calories').focus();
+            }
+
+            // Handle new food form submission
+            document.getElementById('new-food-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const foodName = document.getElementById('new-food-name').value.trim();
+                const calories = parseInt(document.getElementById('new-food-calories').value);
+                const category = document.getElementById('new-food-category').value;
+                
+                addNewFoodToDatabase(foodName, calories, category);
+            });
+
+            // Add new food to database
+            async function addNewFoodToDatabase(name, calories, category) {
+                showLoading();
+                
+                try {
+                    const newFood = {
+                        name: name,
+                        calories: calories,
+                        category: category,
+                        addedBy: getUserId()
+                    };
+                    
+                    const { data: insertedFoods, error } = await supabaseClient
+                        .from('foods')
+                        .insert([
+                            {
+                                name: newFood.name,
+                                calories: newFood.calories,
+                                category: newFood.category,
+                                added_by: newFood.addedBy
+                            }
+                        ])
+                        .select('id,name,calories,category')
+                        .limit(1);
+
+                    if (!error && insertedFoods && insertedFoods.length > 0) {
+                        const result = insertedFoods[0];
+                        showMessage(`✅ Added "${name}" to database!`, 'success');
+                        
+                        // Automatically select the new food
+                        selectFood({
+                            id: result.id,
+                            name: result.name,
+                            calories: result.calories,
+                            category: result.category
+                        });
+                        
+                        hideAddNewFood();
+                    } else {
+                        throw error || new Error('Failed to add food');
+                    }
+                } catch (error) {
+                    console.error('Error adding food:', error);
+                    showMessage('❌ Failed to add food to database.', 'error');
+                }
+                
+                hideLoading();
+            }
+
+            // Cancel new food addition
+            document.getElementById('cancel-new-food').addEventListener('click', hideAddNewFood);
+
+            // Hide add new food form
+            function hideAddNewFood() {
+                document.getElementById('add-new-food').style.display = 'none';
+                document.getElementById('new-food-form').reset();
+            }
+
+            // Utility functions
+            function hideSearchResults() {
+                document.getElementById('search-results').style.display = 'none';
+            }
+
+            function hideSelectedFood() {
+                document.getElementById('selected-food').style.display = 'none';
+                document.getElementById('total-calories').style.display = 'none';
+                selectedFood = null;
+                updateLogButton();
+            }
+
+            function showSearchLoading() {
+                document.getElementById('search-results').innerHTML = '<div class="loading">🔍 Searching...</div>';
+                document.getElementById('search-results').style.display = 'block';
+            }
+
+            function displaySearchError(message) {
+                document.getElementById('search-results').innerHTML = `<div class="error">${message}</div>`;
+                document.getElementById('search-results').style.display = 'block';
+            }
+
+            function clearForm() {
+                document.getElementById('log-food-form').reset();
+                hideSearchResults();
+                hideSelectedFood();
+                document.getElementById('food-search').focus();
+            }
+
+            function showMessage(message, type) {
+                const messageArea = document.getElementById('message-area');
+                messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageArea.innerHTML = '';
+                    }, 3000);
+                }
+            }
+
+            function showLoading() {
+                const messageArea = document.getElementById('message-area');
+                messageArea.innerHTML = '<div class="loading">🔄 Processing...</div>';
+            }
+
+            function hideLoading() {
+                // Loading will be replaced by success/error message
+            }
+
+            function updateDailyCalories(newCalories) {
+                const currentCalories = parseInt(localStorage.getItem('dailyCalories') || '0');
+                const updatedCalories = currentCalories + newCalories;
+                localStorage.setItem('dailyCalories', updatedCalories.toString());
+            }
+
+            function getUserId() {
+                const user = JSON.parse(localStorage.getItem('nutrioUser') || 'null');
+                return user ? user.id : null;
+            }
+
+            // Click outside to hide search results
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#food-search') && !event.target.closest('#search-results')) {
+                    hideSearchResults();
+                }
+            });
+        </script>
+
+        <footer>
+            <p>&copy; 2025 Nutrio. All rights reserved.</p>
+        </footer>
+    </body>
+</html>

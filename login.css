@@ -1,0 +1,438 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Full Page Shimmer Effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    animation: fullPageShimmer 4s infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes fullPageShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Header Styles with Enhanced Shimmer */
+header {
+    background: linear-gradient(135deg, #2c3e50, #1a1a1a);
+    color: #ffffff;
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Header Shimmer Effect */
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.15), transparent);
+    animation: headerShimmer 3s infinite;
+    z-index: 1;
+}
+
+@keyframes headerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure header content is above shimmer */
+header > * {
+    position: relative;
+    z-index: 2;
+}
+
+header h1 {
+    font-size: 3rem;
+    color: #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    from {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(76, 175, 80, 0.3);
+    }
+    to {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(76, 175, 80, 0.5);
+    }
+}
+
+header img {
+    width: 150px;
+    height: auto;
+    margin: 20px 0;
+    border: 3px solid #4CAF50;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+}
+
+header img:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+header p {
+    font-size: 1.3em;
+    margin-top: 15px;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+/* Main Content with Enhanced Background */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: linear-gradient(45deg, #1a1a1a, #2c3e50);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Main Section Shimmer */
+main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.1), transparent);
+    animation: mainShimmer 5s infinite;
+    z-index: 1;
+}
+
+@keyframes mainShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure main content is above shimmer */
+main > * {
+    position: relative;
+    z-index: 2;
+}
+
+main h2 {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 40px;
+    text-align: center;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Login Form Styling */
+main form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(33, 46, 59, 0.9));
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+    min-width: 400px;
+    max-width: 500px;
+    width: 100%;
+}
+
+/* Form Shimmer Effect */
+main form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4CAF50, #45a049, #4CAF50);
+    background-size: 200% 100%;
+    animation: gradient-flow 3s ease-in-out infinite;
+}
+
+@keyframes gradient-flow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Form Labels */
+main label {
+    font-size: 1.2em;
+    color: #ffffff;
+    margin-bottom: 8px;
+    margin-top: 20px;
+    align-self: flex-start;
+    font-weight: bold;
+}
+
+/* Form Inputs */
+main input[type="text"], 
+main input[type="email"], 
+main input[type="password"] {
+    width: 100%;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #2c3e50;
+    border-radius: 10px;
+    background-color: #000000;
+    color: #ffffff;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+main input[type="text"]:focus, 
+main input[type="email"]:focus, 
+main input[type="password"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Enhanced Button Styles */
+main button, 
+footer button {
+    padding: 15px 35px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    min-width: 150px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    margin: 15px 10px;
+}
+
+/* Button Shimmer Effect */
+main button::before, 
+footer button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+main button:hover::before, 
+footer button:hover::before {
+    left: 100%;
+}
+
+main button:hover, 
+footer button:hover {
+    background: linear-gradient(45deg, #45a049, #3d8b40);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* Additional Text Styling */
+main p {
+    font-size: 1em;
+    color: #cccccc;
+    margin-top: 20px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+main p a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+main p a:hover {
+    color: #45a049;
+    text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Footer Styles with Shimmer */
+footer {
+    background: linear-gradient(135deg, #212121, #2c3e50);
+    color: #ffffff;
+    text-align: center;
+    padding: 30px 20px;
+    position: relative;
+    width: 100%;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+/* Footer Shimmer */
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+    animation: footerShimmer 6s infinite;
+    z-index: 1;
+}
+
+@keyframes footerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure footer content is above shimmer */
+footer > * {
+    position: relative;
+    z-index: 2;
+}
+
+footer p {
+    color: #cccccc;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+    }
+    
+    header img {
+        width: 120px;
+    }
+    
+    main h2 {
+        font-size: 2rem;
+    }
+    
+    main form {
+        min-width: 300px;
+        padding: 30px 20px;
+    }
+    
+    main button, 
+    footer button {
+        width: 100%;
+        max-width: 250px;
+        padding: 18px 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 30px 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    header img {
+        width: 100px;
+    }
+    
+    main {
+        padding: 40px 15px;
+    }
+    
+    main h2 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+    
+    main form {
+        min-width: 280px;
+        padding: 25px 15px;
+    }
+    
+    main button, 
+    footer button {
+        font-size: 1rem;
+        padding: 15px 25px;
+    }
+}
+
+/* Add smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced Page Load Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    animation: fadeIn 0.8s ease-in;
+}
+
+/* Form Animation */
+@keyframes formSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+main form {
+    animation: formSlideIn 1s ease-out;
+}

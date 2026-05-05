@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="profile.css">
+        <title>Nutrio - Profile</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Welcome to Your Profile</h1>
+        </header>
+        <main>
+            <section>
+                <h2>Profile Overview</h2>
+                <br>
+                <p>Name: <span id="profile-name">Loading...</span></p>
+                <p>Username: <span id="profile-username">Loading...</span></p>
+                <p>Age: <span id="profile-age">Loading...</span></p>
+                <p>Height: <span id="profile-height">Loading...</span></p>
+                <p>Weight: <span id="profile-weight">Loading...</span></p>
+                <p>Gender: <span id="profile-gender">Loading...</span></p>
+                <p>Fitness Goal: <span id="profile-goal">Loading...</span></p>
+                <label for="activity-level">Activity Level:</label>
+                <select id="activity-level">
+                    <option value="sedentary">Sedentary</option>
+                    <option value="light">Lightly Active</option>
+                    <option value="moderate">Moderately Active</option>
+                    <option value="active">Active</option>
+                </select>
+                <br>
+                <p>Email: <span id="profile-email">Loading...</span></p>
+                <button type="button" onclick="location.href='editprofile.html';">Edit Profile</button>
+            </section>
+            <section>
+                <h2>Your Preferences</h2>
+                <label for="notifications">Notifications:</label>
+                <select id="notifications">
+                    <option value="enabled">Enabled</option>
+                    <option value="disabled">Disabled</option>
+                </select>
+            </section>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+            const SUPABASE_URL = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Restore Supabase auth session from tokens saved during login
+            (async () => {
+                const accessToken = localStorage.getItem('nutrioToken');
+                const refreshToken = localStorage.getItem('nutrioRefreshToken');
+                if (accessToken) {
+                    await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || ''
+                    });
+                }
+            })();
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const user = JSON.parse(localStorage.getItem('nutrioUser') || 'null');
+
+                if (!user || !user.id) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                supabaseClient
+                .from('users')
+                .select('id,firstname,lastname,username,email,age,gender,height,weight,fitness_goal,activity_level')
+                .eq('id', user.id)
+                .limit(1)
+                .maybeSingle()
+                .then(({ data, error }) => {
+                    if (error || !data) {
+                        throw error || new Error('Failed to load profile');
+                    }
+
+                    const u = data;
+                    document.getElementById('profile-name').textContent = `${u.firstname} ${u.lastname}`;
+                    document.getElementById('profile-username').textContent = u.username;
+                    document.getElementById('profile-age').textContent = u.age;
+                    document.getElementById('profile-height').textContent = u.height ? `${Math.floor(u.height / 12)} ft ${u.height % 12} in` : 'Not set';
+                    document.getElementById('profile-weight').textContent = u.weight ? `${u.weight} lbs` : 'Not set';
+                    document.getElementById('profile-gender').textContent = u.gender;
+                    document.getElementById('profile-goal').textContent = u.fitness_goal;
+                    document.getElementById('profile-email').textContent = u.email;
+
+                    const activitySelect = document.getElementById('activity-level');
+                    if (u.activity_level) {
+                        activitySelect.value = u.activity_level;
+                    }
+                })
+                .catch(err => {
+                    console.error('Profile load error:', err);
+                    document.querySelector('section').innerHTML = '<p>Failed to load profile. Please log in again.</p>';
+                });
+            });
+        </script>
+    </body>
+</html>

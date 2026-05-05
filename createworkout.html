@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="createworkout.css">
+        <title>Nutrio - Create Workout</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+            <p>Welcome to Nutrio! Your journey to better health starts here.</p>
+        </header>
+        <main>
+            <section class="search-section">
+                <h2>Search for Exercises</h2>
+                <input type="text" id="exercise-search" placeholder="Search for exercises...">
+                <button type="button" id="search-button">Search</button>
+                <ul id="exercise-list"></ul>
+            </section>
+
+            <section class="workout-name-section">
+                <h2>Workout Name</h2>
+                <input type="text" id="workout-name" placeholder="Enter workout name">
+            </section>
+
+            <section class="calories-section">
+                <h2>Total Calories Burned</h2>
+                <p id="total-calories">0 calories</p>
+            </section>
+
+            <button type="button" id="save-workout-button">Save Workout</button>
+        </main>
+        <footer>
+            <p>&copy; 2025 Nutrio. All rights reserved.</p> 
+        </footer>
+        <script>
+            // Exercise database - mock data
+            const exerciseDatabase = [
+                { name: 'Push-ups', calories: 35, description: 'Basic bodyweight chest exercise' },
+                { name: 'Squats', calories: 40, description: 'Lower body strength exercise' },
+                { name: 'Burpees', calories: 60, description: 'Full body high-intensity exercise' },
+                { name: 'Jumping Jacks', calories: 45, description: 'Cardio exercise' },
+                { name: 'Plank', calories: 25, description: 'Core strengthening exercise' },
+                { name: 'Lunges', calories: 38, description: 'Lower body exercise' },
+                { name: 'Mountain Climbers', calories: 50, description: 'High-intensity cardio exercise' },
+                { name: 'Bicycle Crunches', calories: 30, description: 'Core exercise targeting obliques' },
+                { name: 'High Knees', calories: 42, description: 'Cardio exercise' },
+                { name: 'Russian Twists', calories: 28, description: 'Core rotational exercise' }
+            ];
+
+            // Initialize an empty workout array
+            const workout = [];
+
+            // Search functionality
+            document.getElementById('search-button').addEventListener('click', function() {
+                const searchQuery = document.getElementById('exercise-search').value.toLowerCase().trim();
+                if (searchQuery === '') {
+                    alert('Please enter an exercise to search for');
+                    return;
+                }
+                searchExercises(searchQuery);
+            });
+
+            // Allow Enter key to trigger search
+            document.getElementById('exercise-search').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('search-button').click();
+                }
+            });
+
+            // Search exercises function
+            function searchExercises(query) {
+                const results = exerciseDatabase.filter(exercise => 
+                    exercise.name.toLowerCase().includes(query) ||
+                    exercise.description.toLowerCase().includes(query)
+                );
+                displayExercises(results);
+            }
+
+            // Display fetched exercises in the workout list
+            function displayExercises(exercises) {
+                const exerciseList = document.getElementById('exercise-list');
+                exerciseList.innerHTML = '';
+                
+                if (exercises.length === 0) {
+                    exerciseList.innerHTML = '<li style="text-align: center; color: #888;">No exercises found. Try a different search term.</li>';
+                    return;
+                }
+
+                exercises.forEach(exercise => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${exercise.name}</strong> - ${exercise.calories} calories
+                                <br><small style="color: #ccc;">${exercise.description}</small>
+                            </div>
+                            <button onclick="addExerciseToWorkout('${exercise.name}', ${exercise.calories})" 
+                                    style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+                                           color: white; border: none; padding: 8px 16px; 
+                                           border-radius: 20px; cursor: pointer; font-size: 0.9em;
+                                           transition: all 0.3s ease;">
+                                Add to Workout
+                            </button>
+                        </div>
+                    `;
+                    exerciseList.appendChild(listItem);
+                });
+            }
+
+            // Allow adding multiple exercises in 1 workout
+            function addExerciseToWorkout(exerciseName, calories) {
+                // Check if exercise is already in workout
+                const existingExercise = workout.find(ex => ex.name === exerciseName);
+                if (existingExercise) {
+                    alert('This exercise is already in your workout!');
+                    return;
+                }
+
+                const exercise = { name: exerciseName, calories: calories };
+                workout.push(exercise);
+                
+                const totalCalories = calculateTotalCalories(workout);
+                document.getElementById('total-calories').innerText = totalCalories + ' calories';
+                
+                alert(`${exerciseName} added to your workout!`);
+                console.log('Current workout:', workout);
+            }
+
+            // Calculate total calories burned in the workout
+            function calculateTotalCalories(workout) {
+                let totalCalories = 0;
+                workout.forEach(exercise => {
+                    totalCalories += exercise.calories;
+                });
+                return totalCalories;
+            }
+
+            // Save workout functionality
+            document.getElementById('save-workout-button').addEventListener('click', function() {
+                const workoutName = document.getElementById('workout-name').value.trim();
+                
+                if (!workoutName) {
+                    alert('Please enter a workout name!');
+                    document.getElementById('workout-name').focus();
+                    return;
+                }
+                
+                if (workout.length === 0) {
+                    alert('Please add some exercises to your workout!');
+                    return;
+                }
+
+                // Create workout object
+                const workoutData = {
+                    id: Date.now(),
+                    name: workoutName,
+                    exercises: [...workout],
+                    totalCalories: calculateTotalCalories(workout),
+                    createdDate: new Date().toISOString().split('T')[0]
+                };
+
+                // Save to localStorage (replace with database call later)
+                const savedWorkouts = JSON.parse(localStorage.getItem('savedWorkouts') || '[]');
+                savedWorkouts.push(workoutData);
+                localStorage.setItem('savedWorkouts', JSON.stringify(savedWorkouts));
+
+                console.log('Saving workout:', workoutData);
+                alert(`Workout "${workoutName}" saved successfully!`);
+                
+                // Reset form
+                document.getElementById('workout-name').value = '';
+                workout.length = 0; // Clear workout array
+                document.getElementById('total-calories').innerText = '0 calories';
+                document.getElementById('exercise-list').innerHTML = '';
+                document.getElementById('exercise-search').value = '';
+            });
+
+            // Initialize page
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Create Workout page loaded');
+                document.getElementById('total-calories').innerText = '0 calories';
+            });
+        </script>
+    </body> 
+</html>

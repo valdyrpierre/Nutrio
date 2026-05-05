@@ -1,0 +1,529 @@
+/* Nutrio Log Food - Original Design */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0a0a0a;
+    font-family: Arial, sans-serif;
+    color: white;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Custom page shimmer */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    animation: pageShimmer 4s infinite;
+    z-index: 5;
+    pointer-events: none;
+}
+
+@keyframes pageShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Header styling */
+header {
+    background-color: #1a1a1a;
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 2px solid #4CAF50;
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.12), transparent);
+    animation: headerMove 3s infinite;
+    z-index: 1;
+}
+
+@keyframes headerMove {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+header > * {
+    position: relative;
+    z-index: 2;
+}
+
+header h1 {
+    font-size: 2.4rem;
+    color: #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    animation: textGlow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes textGlow {
+    from {
+        text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+    }
+    to {
+        text-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+    }
+}
+
+header img {
+    width: 125px;
+    height: auto;
+    margin: 12px 0;
+    border: 2px solid #4CAF50;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+header img:hover {
+    transform: scale(1.08) rotate(3deg);
+}
+
+header p {
+    font-size: 1rem;
+    color: #bbbbbb;
+    margin-top: 8px;
+}
+
+/* Main container */
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    position: relative;
+}
+
+main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.08), transparent);
+    animation: mainMove 5s infinite;
+    z-index: 1;
+}
+
+@keyframes mainMove {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+main > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Log food section */
+.log-food {
+    background-color: #1a1a1a;
+    padding: 35px;
+    border-radius: 12px;
+    border: 2px solid #FF9800;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.log-food::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FF9800, #F57C00, #FF9800);
+    background-size: 200% 100%;
+    animation: topBorder 3s ease-in-out infinite;
+}
+
+@keyframes topBorder {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.log-food h2 {
+    font-size: 2rem;
+    color: #FF9800;
+    text-align: center;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Form styling */
+#log-food-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#log-food-form label {
+    font-size: 1.2rem;
+    color: #FF9800;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+#log-food-form input {
+    padding: 15px;
+    font-size: 1rem;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #0a0a0a;
+    color: white;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+#log-food-form input:focus {
+    outline: none;
+    border-color: #FF9800;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+#log-food-form input::placeholder {
+    color: #666;
+}
+
+/* Input shimmer effect */
+#log-food-form input:focus::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 152, 0, 0.2), transparent);
+    animation: inputShimmer 1s;
+}
+
+@keyframes inputShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Submit button */
+#log-food-form button {
+    padding: 18px 25px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #FF9800, #F57C00);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+#log-food-form button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+#log-food-form button:hover::before {
+    left: 100%;
+}
+
+#log-food-form button:hover {
+    background: linear-gradient(45deg, #F57C00, #E65100);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+}
+
+#log-food-form button:active {
+    transform: translateY(-1px);
+}
+
+/* Success/Error messages */
+.message {
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    text-align: center;
+    font-weight: bold;
+    animation: messageSlide 0.5s ease-out;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.success {
+    background-color: rgba(76, 175, 80, 0.2);
+    border: 2px solid #4CAF50;
+    color: #4CAF50;
+}
+
+.message.error {
+    background-color: rgba(244, 67, 54, 0.2);
+    border: 2px solid #f44336;
+    color: #f44336;
+}
+
+/* Loading state */
+.loading {
+    text-align: center;
+    color: #cccccc;
+    font-size: 1.1rem;
+    padding: 20px;
+    animation: loadingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* Additional form features */
+.form-group {
+    position: relative;
+}
+
+.form-group input:valid {
+    border-color: #4CAF50;
+}
+
+.form-group input:invalid:not(:placeholder-shown) {
+    border-color: #f44336;
+}
+
+/* Quick add suggestions */
+.quick-add {
+    background-color: #0f0f0f;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: 1px solid #333;
+}
+
+.quick-add h3 {
+    color: #4CAF50;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.quick-add-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.quick-add-btn {
+    padding: 10px 12px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.quick-add-btn:hover {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    transform: translateY(-2px);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.9rem;
+    }
+    
+    header img {
+        width: 105px;
+    }
+    
+    main {
+        padding: 18px 15px;
+    }
+    
+    .log-food {
+        padding: 25px 20px;
+    }
+    
+    .log-food h2 {
+        font-size: 1.6rem;
+    }
+    
+    #log-food-form {
+        gap: 15px;
+    }
+    
+    #log-food-form input,
+    #log-food-form button {
+        padding: 12px;
+        font-size: 1rem;
+    }
+    
+    .quick-add-buttons {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 22px 15px;
+    }
+    
+    header h1 {
+        font-size: 1.6rem;
+    }
+    
+    header img {
+        width: 85px;
+    }
+    
+    .log-food {
+        padding: 20px 15px;
+    }
+    
+    .log-food h2 {
+        font-size: 1.4rem;
+    }
+    
+    #log-food-form input,
+    #log-food-form button {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .quick-add-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Page animations */
+body {
+    animation: pageAppear 0.7s ease-in;
+}
+
+@keyframes pageAppear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.log-food {
+    animation: sectionAppear 0.9s ease-out 0.2s both;
+}
+
+@keyframes sectionAppear {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Form field focus animation */
+.form-group {
+    animation: fieldAppear 0.6s ease-out;
+}
+
+@keyframes fieldAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Button press effect */
+#log-food-form button:active {
+    animation: buttonPress 0.1s ease-out;
+}
+
+@keyframes buttonPress {
+    0% { transform: translateY(-3px) scale(1); }
+    50% { transform: translateY(-1px) scale(0.98); }
+    100% { transform: translateY(-3px) scale(1); }
+}
+
+/* Footer (if you add one) */
+footer {
+    background-color: #1a1a1a;
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    margin-top: 40px;
+    border-top: 1px solid #333;
+}
+
+footer p {
+    font-size: 0.9rem;
+}
+
+/* Accessibility */
+button:focus,
+input:focus {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+/* Hover effects for better UX */
+.log-food:hover {
+    border-color: #FFB74D;
+    transition: border-color 0.3s ease;
+}
+
+/* Input validation styling */
+input:required:valid {
+    background-image: linear-gradient(45deg, transparent 40%, rgba(76, 175, 80, 0.1) 40%, rgba(76, 175, 80, 0.1) 60%, transparent 60%);
+}
+
+input:required:invalid:not(:placeholder-shown) {
+    background-image: linear-gradient(45deg, transparent 40%, rgba(244, 67, 54, 0.1) 40%, rgba(244, 67, 54, 0.1) 60%, transparent 60%);
+}

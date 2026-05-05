@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="myworkout.css">
+        <title>Nutrio - My Workout</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+            <p>Welcome to Nutrio! Your journey to better health starts here.</p>
+        </header>
+
+        <main>
+            <section class="workout-section">
+                <h2>Your Custom Workout</h2>
+        
+                <!-- Custom Workout Builder -->
+                <div class="selected-workouts" >
+                    <h3>My Custom Workout</h3>
+                    <div class="workout-name-section" >
+                        <div id="saved-workouts"></div>
+                        <script>
+                            // Simulate fetching saved workouts from localStorage or backend
+                            const savedWorkouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+
+                            const savedWorkoutsDiv = document.getElementById('saved-workouts');
+                            if (savedWorkouts.length > 0) {
+                                const ul = document.createElement('ul');
+                                savedWorkouts.forEach(workout => {
+                                    const li = document.createElement('li');
+                                    li.textContent = workout.name || 'Unnamed Workout';
+                                    ul.appendChild(li);
+                                });
+                                savedWorkoutsDiv.appendChild(ul);
+                            }
+                            else if (savedWorkoutsDiv) {
+                                savedWorkoutsDiv.innerHTML = '<p class="no-saved-workouts">No saved workouts yet. Create and save your first workout !</p>';
+                            }
+                            // If no workouts, nothing is displayed
+                        </script>
+                        <button type="button" onclick="location.href='createworkout.html';">Create a Workout</button>
+                    </div>
+                    <div id="workout-list" class="workout-list">
+                    </div>
+                
+
+                <script>
+
+
+                </script>
+
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Nutrio. All rights reserved.</p>
+        </footer>
+        <script>
+
+        
+        
+        </script>
+    </body>
+</html>

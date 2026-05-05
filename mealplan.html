@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="mealplan.css">
+        <title>Nutrio - Meal Plan</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+            <p>Welcome to Nutrio! Your journey to better health starts here.</p>
+        </header>
+        
+        <main>
+            <h2>🍽️ Your Meal Plan</h2>
+            
+            <div class="controls">
+                <label for="meal-plan-length">📅 View by:</label>
+                <select id="meal-plan-length" name="meal-plan-length">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                </select>
+                <a class="create-plan-link" href="createmealplan.html">➕ Create Meal Plan</a>
+            </div>
+            
+            <div id="meal-plan-results">
+                <!-- Content will be dynamically loaded from database -->
+                <div class="loading">🔄 Loading your meal plan...</div>
+            </div>
+        </main>
+        
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+            const SUPABASE_URL = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Restore Supabase auth session from tokens saved during login
+            (async () => {
+                const accessToken = localStorage.getItem('nutrioToken');
+                const refreshToken = localStorage.getItem('nutrioRefreshToken');
+                if (accessToken) {
+                    await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || ''
+                    });
+                }
+            })();
+            
+            // Initialize the page
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Meal plan page loaded successfully!');
+                loadMealPlan('day'); // Load day view by default
+            });
+            
+            // Handle meal plan view switching
+            document.getElementById('meal-plan-length').addEventListener('change', function() {
+                const selectedView = this.value;
+                loadMealPlan(selectedView);
+            });
+            
+            // Main function to load meal plan based on view type
+            async function loadMealPlan(viewType) {
+                showLoading();
+                
+                try {
+                    if (viewType === 'day') {
+                        const mealData = await fetchDayMealPlan();
+                        if (mealData.success) {
+                            displayDayMealPlan(mealData);
+                        } else {
+                            showError('Failed to load meal plan. Please try again.');
+                        }
+                    } else if (viewType === 'week') {
+                        const mealData = await fetchWeekMealPlan();
+                        if (mealData.success) {
+                            // Display each day's meal plan for 7 days
+                            const resultsDiv = document.getElementById('meal-plan-results');
+                            resultsDiv.innerHTML = '';
+                            for (let i = 0; i < 7; i++) {
+                                if (mealData.days[i]) {
+                                    displayDayPlan(mealData.days[i]);
+                                }
+                            }
+                        } else {
+                            showError('Failed to load meal plan. Please try again.');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading meal plan:', error);
+                    showError('Unable to connect to the server. Please check your connection.');
+                } finally {
+                    hideLoading();
+                }
+            }
+            
+            // Fetch day meal plan - select one meal from each section (breakfast, lunch, dinner)
+            async function fetchDayMealPlan() {
+                try {
+                    const customPlan = getCustomMealPlan();
+                    if (customPlan && Array.isArray(customPlan.meals) && customPlan.meals.length > 0) {
+                        return {
+                            success: true,
+                            meals: customPlan.meals,
+                            totalCalories: customPlan.meals.reduce((total, meal) => total + (Number(meal.calories) || 0), 0),
+                            recommendedCalories: Number(customPlan.recommendedCalories) || getRecommendedCalories(),
+                            source: 'custom'
+                        };
+                    }
+
+                    const userId = getUserId();
+                    const recommendedCalories = getRecommendedCalories(); // Get user's calorie goal
+                    const userPreferenceProfile = await getUserPreferenceProfile(userId);
+                    
+                    // Fetch all available meals from each section
+                    const [breakfastMeals, lunchMeals, dinnerMeals] = await Promise.all([
+                        fetchMealsFromSection('breakfast', userId),
+                        fetchMealsFromSection('lunch', userId),
+                        fetchMealsFromSection('dinner', userId)
+                    ]);
+                    
+                    if (!breakfastMeals.success || !lunchMeals.success || !dinnerMeals.success) {
+                        return { success: false, error: 'Failed to fetch meals from database' };
+                    }
+                    
+                    // Select one meal from each section using calorie fit + learned user preferences
+                    const selectedMeals = selectRecommendedMeals(
+                        breakfastMeals.meals,
+                        lunchMeals.meals,
+                        dinnerMeals.meals,
+                        recommendedCalories,
+                        userPreferenceProfile
+                    );
+                    
+                    return {
+                        success: true,
+                        meals: selectedMeals,
+                        totalCalories: selectedMeals.reduce((total, meal) => total + meal.calories, 0),
+                        recommendedCalories: recommendedCalories,
+                        source: 'recommended'
+                    };
+                    
+                } catch (error) {
+                    console.error('Error fetching day meal plan:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+            // Fetch week meal plan - placeholder for future implementation
+            async function fetchWeekMealPlan() {
+                // Placeholder: Implement week meal plan logic here
+                // For now, return empty data
+                return { success: true, days: Array(7).fill({ meals: [] }) };
+            }
+            
+            // Fetch meals from a specific section (breakfast, lunch, or dinner)
+            async function fetchMealsFromSection(section, userId) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('foods')
+                        .select('id,name,calories,category')
+                        .order('name', { ascending: true })
+                        .limit(100);
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    const meals = (data || []).map((food) => ({
+                        id: food.id,
+                        name: food.name,
+                        calories: Number(food.calories) || 0,
+                        description: `Category: ${food.category || 'General'}`,
+                        mealType: section
+                    }));
+
+                    return {
+                        success: true,
+                        meals
+                    };
+                } catch (error) {
+                    console.error(`Error fetching ${section} meals:`, error);
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            // Build a lightweight recommendation profile from the user's food history.
+            // This is a practical first step toward ML-powered meal suggestions.
+            async function getUserPreferenceProfile(userId) {
+                const defaultProfile = {
+                    favoriteCategories: [],
+                    recentFoodIds: [],
+                    recentFoodNames: [],
+                    mealTypeCategoryBoosts: {
+                        breakfast: ['fruits', 'grains', 'dairy'],
+                        lunch: ['proteins', 'vegetables', 'grains'],
+                        dinner: ['proteins', 'vegetables'],
+                        snack: ['fruits', 'dairy', 'snacks']
+                    }
+                };
+
+                if (!userId || userId === 'guest') {
+                    return defaultProfile;
+                }
+
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('food_logs')
+                        .select('food_id, meal_type, foods(name, category)')
+                        .eq('user_id', userId)
+                        .order('logged_at', { ascending: false })
+                        .limit(50);
+
+                    if (error || !data) {
+                        return defaultProfile;
+                    }
+
+                    const categoryCounts = {};
+                    const recentFoodIds = [];
+                    const recentFoodNames = [];
+
+                    data.forEach((entry) => {
+                        const foodInfo = entry.foods || {};
+                        const category = String(foodInfo.category || '').toLowerCase();
+                        const foodName = String(foodInfo.name || '').toLowerCase();
+
+                        if (category) {
+                            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+                        }
+
+                        if (entry.food_id !== null && entry.food_id !== undefined) {
+                            recentFoodIds.push(String(entry.food_id));
+                        }
+
+                        if (foodName) {
+                            recentFoodNames.push(foodName);
+                        }
+                    });
+
+                    const favoriteCategories = Object.entries(categoryCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 3)
+                        .map(([category]) => category);
+
+                    return {
+                        ...defaultProfile,
+                        favoriteCategories,
+                        recentFoodIds,
+                        recentFoodNames
+                    };
+                } catch (error) {
+                    console.warn('Falling back to default recommendation profile:', error);
+                    return defaultProfile;
+                }
+            }
+
+            function scoreMealForUser(food, mealType, targetPerMeal, userPreferenceProfile) {
+                let score = 0;
+                const calories = Number(food.calories) || 0;
+                const category = String(food.category || '').toLowerCase();
+                const name = String(food.name || '').toLowerCase();
+                const calorieDifference = Math.abs(calories - targetPerMeal);
+                const mealTypeBoosts = userPreferenceProfile.mealTypeCategoryBoosts[mealType] || [];
+
+                // Strongly reward foods that fit the user's calorie target for that meal.
+                score += Math.max(0, 140 - calorieDifference);
+
+                // Reward categories the user tends to eat more often.
+                if (userPreferenceProfile.favoriteCategories.includes(category)) {
+                    score += 40;
+                }
+
+                // Add a smaller boost for categories that naturally fit the meal type.
+                if (mealTypeBoosts.includes(category)) {
+                    score += 25;
+                }
+
+                // Slightly reward foods the user has logged before.
+                if (userPreferenceProfile.recentFoodIds.includes(String(food.id))) {
+                    score += 12;
+                }
+
+                if (userPreferenceProfile.recentFoodNames.includes(name)) {
+                    score += 10;
+                }
+
+                return score;
+            }
+
+            function getSuggestionReasons(food, mealType, targetPerMeal, userPreferenceProfile) {
+                const reasons = [];
+                const calories = Number(food.calories) || 0;
+                const category = String(food.category || '').toLowerCase();
+                const mealTypeBoosts = userPreferenceProfile.mealTypeCategoryBoosts[mealType] || [];
+
+                if (Math.abs(calories - targetPerMeal) <= 120) {
+                    reasons.push('fits your calorie goal');
+                }
+
+                if (userPreferenceProfile.favoriteCategories.includes(category)) {
+                    reasons.push(`matches your usual ${category} choices`);
+                }
+
+                if (mealTypeBoosts.includes(category)) {
+                    reasons.push(`works well for ${mealType}`);
+                }
+
+                return reasons.slice(0, 2).join(' • ') || 'recommended for balance and variety';
+            }
+
+            function rankMealsForType(meals, mealType, targetPerMeal, userPreferenceProfile) {
+                return meals
+                    .map((meal) => ({
+                        ...meal,
+                        mealType,
+                        recommendationScore: scoreMealForUser(meal, mealType, targetPerMeal, userPreferenceProfile),
+                        recommendationReason: getSuggestionReasons(meal, mealType, targetPerMeal, userPreferenceProfile)
+                    }))
+                    .sort((a, b) => b.recommendationScore - a.recommendationScore);
+            }
+
+            // Select a meal plan using calorie matching + personalized recommendation scoring.
+            function selectRecommendedMeals(breakfastMeals, lunchMeals, dinnerMeals, targetCalories, userPreferenceProfile) {
+                const targetPerMeal = Math.max(250, Math.round(targetCalories / 3));
+                const rankedBreakfast = rankMealsForType(breakfastMeals, 'breakfast', targetPerMeal, userPreferenceProfile).slice(0, 10);
+                const rankedLunch = rankMealsForType(lunchMeals, 'lunch', targetPerMeal, userPreferenceProfile).slice(0, 10);
+                const rankedDinner = rankMealsForType(dinnerMeals, 'dinner', targetPerMeal, userPreferenceProfile).slice(0, 10);
+
+                let bestCombination = [];
+                let bestScore = -Infinity;
+
+                for (const breakfast of rankedBreakfast) {
+                    for (const lunch of rankedLunch) {
+                        for (const dinner of rankedDinner) {
+                            const totalCalories = (Number(breakfast.calories) || 0) + (Number(lunch.calories) || 0) + (Number(dinner.calories) || 0);
+                            const calorieScore = Math.max(0, 200 - Math.abs(totalCalories - targetCalories));
+                            const uniqueIds = new Set([String(breakfast.id), String(lunch.id), String(dinner.id)]);
+                            const diversityPenalty = uniqueIds.size < 3 ? 80 : 0;
+                            const combinationScore = breakfast.recommendationScore + lunch.recommendationScore + dinner.recommendationScore + calorieScore - diversityPenalty;
+
+                            if (combinationScore > bestScore) {
+                                bestScore = combinationScore;
+                                bestCombination = [breakfast, lunch, dinner];
+                            }
+                        }
+                    }
+                }
+
+                if (bestCombination.length === 0) {
+                    const fallbackMeals = [];
+                    if (rankedBreakfast.length > 0) fallbackMeals.push(rankedBreakfast[0]);
+                    if (rankedLunch.length > 0) fallbackMeals.push(rankedLunch[0]);
+                    if (rankedDinner.length > 0) fallbackMeals.push(rankedDinner[0]);
+                    return fallbackMeals;
+                }
+
+                return bestCombination;
+            }
+            
+            // Display day meal plan
+            function displayDayMealPlan(mealData) {
+                const resultsDiv = document.getElementById('meal-plan-results');
+                
+                if (mealData.meals.length === 0) {
+                    resultsDiv.innerHTML = '<div class="no-plan">📝 No meals available yet. <a class="inline-create-link" href="createmealplan.html">Create one now</a>.</div>';
+                    return;
+                }
+                
+                const currentDate = new Date().toLocaleDateString();
+                const mealIcons = {
+                    'breakfast': '🌅',
+                    'lunch': '🍽️',
+                    'dinner': '🌙'
+                };
+                
+                let html = `
+                    <div class="day-view" id="day-view">
+                        <h3>📅 Today's Meal Plan - ${currentDate}</h3>
+                        <p style="text-align:center;color:#bbbbbb;margin-bottom:12px;">${mealData.source === 'custom' ? 'Built from your inputs' : 'Built from your preferences and calorie goal'}</p>
+                `;
+                
+                // Display each selected meal
+                mealData.meals.forEach(meal => {
+                    html += `
+                        <div class="meal-item">
+                            <h4>${mealIcons[meal.mealType]} ${formatMealType(meal.mealType)}</h4>
+                            <p><strong>${meal.name}</strong></p>
+                            <p>${meal.description || 'Delicious and nutritious meal'}</p>
+                            <p class="calories">🔥 Calories: ${meal.calories}</p>
+                            <p style="color: #8BC34A; margin-top: 6px;">🤖 Suggested because: ${meal.recommendationReason || 'it matches your daily goal'}</p>
+                        </div>
+                    `;
+                });
+                
+                // Display totals and comparison
+                const caloriesDifference = mealData.totalCalories - mealData.recommendedCalories;
+                const differenceText = caloriesDifference >= 0 
+                    ? `+${caloriesDifference} calories over target`
+                    : `${Math.abs(caloriesDifference)} calories under target`;
+                
+                html += `
+                    <div style="text-align: center; margin-top: 20px; padding: 15px; background-color: #0f0f0f; border-radius: 8px;">
+                        <p style="color: #4CAF50; font-size: 1.2rem; font-weight: bold;">
+                            📊 Total Daily Calories: ${mealData.totalCalories}
+                        </p>
+                        <p style="color: #FFD700; margin-top: 5px;">
+                            🎯 Target: ${mealData.recommendedCalories} calories
+                        </p>
+                        <p style="color: ${Math.abs(caloriesDifference) <= 50 ? '#4CAF50' : '#FF9800'}; margin-top: 5px;">
+                            📈 ${differenceText}
+                        </p>
+                        <p style="color: #cccccc; margin-top: 10px;">
+                            💧 Don't forget to drink 8 glasses of water throughout the day!
+                        </p>
+                    </div>
+                </div>
+                `;
+                
+                resultsDiv.innerHTML = html;
+            }
+            
+            // Helper functions
+            function formatMealType(mealType) {
+                return mealType.charAt(0).toUpperCase() + mealType.slice(1);
+            }
+            
+            function getUserId() {
+                const user = JSON.parse(localStorage.getItem('nutrioUser') || 'null');
+                return user && user.id ? user.id : 'guest';
+            }
+            
+            function getRecommendedCalories() {
+                // Get user's recommended daily calories from localStorage or default
+                return parseInt(localStorage.getItem('recommendedCalories')) || 2000;
+            }
+
+            function getCustomMealPlan() {
+                try {
+                    const raw = localStorage.getItem('nutrioCustomMealPlan');
+                    if (!raw) return null;
+                    const parsed = JSON.parse(raw);
+                    return parsed && typeof parsed === 'object' ? parsed : null;
+                } catch {
+                    return null;
+                }
+            }
+
+            function displayDayPlan(dayData) {
+                const resultsDiv = document.getElementById('meal-plan-results');
+                const dayTotal = (dayData.meals || []).reduce((sum, meal) => sum + (Number(meal.calories) || 0), 0);
+                const html = `
+                    <div class="day-view" style="margin-top: 16px;">
+                        <h3>${dayData.date || 'Day Plan'}</h3>
+                        <p>Meals: ${(dayData.meals || []).length}</p>
+                        <p>🔥 Total Calories: ${dayTotal}</p>
+                    </div>
+                `;
+                resultsDiv.insertAdjacentHTML('beforeend', html);
+            }
+            
+            // Loading and error states
+            function showLoading() {
+                const resultsDiv = document.getElementById('meal-plan-results');
+                resultsDiv.innerHTML = '<div class="loading">🔄 Loading your meal plan...</div>';
+            }
+            
+            function hideLoading() {
+                // Loading will be hidden when new content is displayed
+            }
+            
+            function showError(message) {
+                const resultsDiv = document.getElementById('meal-plan-results');
+                resultsDiv.innerHTML = `<div class="error">❌ ${message}<br><br><a class="inline-create-link" href="createmealplan.html">Create Meal Plan</a></div>`;
+            }
+        </script>
+    </body>
+</html>

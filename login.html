@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="login.css">
+        <link rel="icon" type="image/x-icon" href="Nutrio_Logo.jpg">
+        <title>Nutrio Login</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <header>
+        <h1>Nutrio Login</h1>
+        <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+        <p>Welcome back! Please log in to your account.</p>
+    </header>
+    <main>
+        <form id="loginForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>  
+            <button type="submit">Login</button>
+            <button type="button" onclick="location.href='help.html';">Forgot Password?</button>
+        </form>
+ <p>Don't have an account? <button type="button" onclick="location.href='createaccount.html';">Create one here</button>. Or <button type="button" onclick="location.href='guest.html';">continue as a guest</button>.</p>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Nutrio. All rights reserved.</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const usernameInput = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!usernameInput || !password) {
+                alert('Please enter your username and password.');
+                return;
+            }
+
+            try {
+                // Look up the email associated with this username
+                let email = usernameInput;
+                if (!usernameInput.includes('@')) {
+                    const { data: profileData, error: lookupError } = await supabaseClient
+                        .from('users')
+                        .select('email')
+                        .eq('username', usernameInput)
+                        .maybeSingle();
+
+                    if (lookupError || !profileData) {
+                        alert('Username not found. Please check your username or use your email address.');
+                        return;
+                    }
+                    email = profileData.email;
+                }
+
+                // Sign in with Supabase Auth
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    alert(error.message || 'Invalid credentials. Please try again.');
+                    return;
+                }
+
+                const session = data.session;
+                const authUser = data.user;
+
+                // Fetch username from the users profile table
+                const { data: profile } = await supabaseClient
+                    .from('users')
+                    .select('username')
+                    .eq('id', authUser.id)
+                    .maybeSingle();
+
+                localStorage.setItem('nutrioUser', JSON.stringify({
+                    id: authUser.id,
+                    username: profile?.username || authUser.email,
+                    email: authUser.email
+                }));
+                localStorage.setItem('nutrioToken', session.access_token);
+                localStorage.setItem('nutrioRefreshToken', session.refresh_token);
+
+                alert('Login successful!');
+                window.location.href = 'logedin.html';
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('An unexpected error occurred during login.');
+            }
+        });
+    </script>
+</html>

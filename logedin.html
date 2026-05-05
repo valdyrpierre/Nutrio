@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="logedin.css">
+        <title>Nutrio - Dashboard</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="a picture of nutrio logo">
+            <p>Healthy eating made easy. Your ultimate food tracker awaits</p>
+        </header>
+        
+        <main>
+            <section class="dashboard">
+                <h2>📅 Today's Date: <span id="current-date"></span></h2>
+                <script>
+                    document.getElementById('current-date').textContent = new Date().toLocaleDateString();
+                </script>
+            </section>
+            
+            <section class="calorie-tracker">
+                <h2>🎯 Calorie Tracker</h2>
+                <p>Your calorie goal for today is <span id="calorie-goal"></span></p>
+                <p>Calories consumed today: <span id="calories-consumed">0</span></p>
+                <p>Calories remaining: <span id="calories-remaining">0</span></p>
+                <script>
+                    // Placeholder: Replace with database value when ready
+                    document.getElementById('calorie-goal').textContent = '2000 calories';
+                    
+                    // Placeholder values for calories consumed and remaining
+                    let caloriesConsumed = 0;
+                    let calorieGoal = 2000;
+                    let caloriesRemaining = calorieGoal - caloriesConsumed;
+                    
+                    // Update remaining calories display
+                    document.getElementById('calories-remaining').textContent = caloriesRemaining;
+                    
+                    // Function to update calorie tracking (for future use)
+                    function updateCalories(consumed) {
+                        caloriesConsumed += consumed;
+                        caloriesRemaining = calorieGoal - caloriesConsumed;
+                        document.getElementById('calories-consumed').textContent = caloriesConsumed;
+                        document.getElementById('calories-remaining').textContent = caloriesRemaining;
+                    }
+                </script>
+            </section>
+
+            <section class="ml-recommendations">
+                <h2>🤖 Food Recommendations</h2>
+                <p id="recommendation-status">Loading personalized recommendations...</p>
+                <ul id="recommendation-list"></ul>
+            </section>
+            
+            <section class="navigation">
+                <button type="button" onclick="location.href='myworkout.html';">💪 My Workout</button>
+                <button type="button" onclick="location.href='machineLearningTraiing.html';">🍽️ Meal Plans</button>
+                <button type="button" onclick="location.href='logfood.html'  ;">📝 Log Food</button>
+                <button type="button" onclick="location.href='profile.html';">👤 Profile</button>
+                <button type="button" onclick="location.href='setting.html';">⚙️ Settings</button>
+            </section>
+        </main>
+
+        <div id="weekly-food-overlay" class="weekly-food-overlay" aria-hidden="true">
+            <section class="weekly-food-modal" role="dialog" aria-modal="true" aria-labelledby="weekly-food-title">
+                <h3 id="weekly-food-title">Weekly Food Check-In</h3>
+                <p>Pick foods you enjoyed this week to help improve your recommendations.</p>
+
+                <form id="weekly-food-form" class="weekly-food-form">
+                    <label><input type="checkbox" name="foodChoice" value="Chicken breast, grilled (3 oz)"> Chicken breast, grilled (3 oz)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Brown rice (1 cup cooked)"> Brown rice (1 cup cooked)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Salmon, baked (3 oz)"> Salmon, baked (3 oz)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Greek yogurt, plain nonfat (6 oz)"> Greek yogurt, plain nonfat (6 oz)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Egg, whole (1 large)"> Egg, whole (1 large)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Avocado (1/2 medium)"> Avocado (1/2 medium)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Banana (1 medium)"> Banana (1 medium)</label>
+                    <label><input type="checkbox" name="foodChoice" value="Oatmeal (1 cup cooked)"> Oatmeal (1 cup cooked)</label>
+                    <p id="weekly-food-error" class="weekly-food-error">Please select at least 5 foods to continue.</p>
+
+                    <div class="weekly-food-actions">
+                        <button type="submit">Save Choices</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <script>
+            const ML_API_BASE = 'http://127.0.0.1:8000';
+
+            // Placeholder function for log food (to be implemented later)
+            function logfood() {
+                alert('Log Food feature coming soon! This will allow you to track your meals and calories.');
+                // Future: Navigate to food logging page
+                // location.href = 'logfood.html';
+            }
+
+            function getCurrentUserId() {
+                const savedUser = localStorage.getItem('nutrioUser');
+                if (savedUser) {
+                    try {
+                        const parsed = JSON.parse(savedUser);
+                        if (parsed && parsed.id) {
+                            return parsed.id;
+                        }
+                    } catch (error) {
+                        // ignore parse errors and try legacy fallback below
+                    }
+                }
+
+                const legacyUserId = localStorage.getItem('nutrio_user_id');
+                if (legacyUserId) {
+                    return legacyUserId;
+                }
+
+                return 'local-user';
+            }
+
+            async function loadRecommendations() {
+                const status = document.getElementById('recommendation-status');
+                const list = document.getElementById('recommendation-list');
+                const userId = getCurrentUserId();
+
+                try {
+                    const response = await fetch(`${ML_API_BASE}/recommendations?user_id=${encodeURIComponent(userId)}&limit=5`);
+                    if (!response.ok) {
+                        throw new Error('Failed to load recommendations');
+                    }
+
+                    const data = await response.json();
+                    list.innerHTML = '';
+
+                    if (!data.recommendations || data.recommendations.length === 0) {
+                        status.textContent = 'No recommendations available yet.';
+                        return;
+                    }
+
+                    data.recommendations.forEach(function (item) {
+                        const li = document.createElement('li');
+                        li.textContent = `${item.name} (${item.calories} cal) - ${item.category}`;
+                        list.appendChild(li);
+                    });
+
+                    status.textContent = `Model: ${data.model_version}`;
+                } catch (error) {
+                    status.textContent = 'Recommendation service is offline. Start the backend API to enable this.';
+                }
+            }
+
+            function getWeekId(date) {
+                const weekStart = new Date(date);
+                weekStart.setHours(0, 0, 0, 0);
+                weekStart.setDate(date.getDate() - date.getDay());
+                return weekStart.toISOString().slice(0, 10);
+            }
+
+            function closeWeeklyFoodModal() {
+                const overlay = document.getElementById('weekly-food-overlay');
+                overlay.classList.remove('visible');
+                overlay.setAttribute('aria-hidden', 'true');
+                overlay.style.display = 'none';
+            }
+
+            function openWeeklyFoodModal() {
+                const overlay = document.getElementById('weekly-food-overlay');
+                overlay.style.display = '';
+                overlay.classList.add('visible');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+
+            function markWeeklyPromptShown(weekId) {
+                localStorage.setItem('nutrio_last_weekly_food_prompt', weekId);
+            }
+
+            function saveWeeklyFoodSelections(weekId, choices) {
+                const storageKey = 'nutrio_food_training_data';
+                let existingData = [];
+                try {
+                    existingData = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    if (!Array.isArray(existingData)) {
+                        existingData = [];
+                    }
+                } catch (error) {
+                    // If storage is corrupted, reset to keep UX working.
+                    existingData = [];
+                }
+
+                existingData.push({
+                    weekId,
+                    selectedFoods: choices,
+                    savedAt: new Date().toISOString()
+                });
+
+                localStorage.setItem(storageKey, JSON.stringify(existingData));
+            }
+
+            function initWeeklyFoodPrompt() {
+                const overlay = document.getElementById('weekly-food-overlay');
+                const form = document.getElementById('weekly-food-form');
+                const errorMessage = document.getElementById('weekly-food-error');
+                const userId = getCurrentUserId();
+                const currentWeekId = getWeekId(new Date());
+                const lastShownWeekId = localStorage.getItem('nutrio_last_weekly_food_prompt');
+
+                if (lastShownWeekId !== currentWeekId) {
+                    openWeeklyFoodModal();
+                }
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    const choices = Array.from(document.querySelectorAll('input[name="foodChoice"]:checked'))
+                        .map(function (input) { return input.value; });
+
+                    if (choices.length < 5) {
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+
+                    errorMessage.style.display = 'none';
+
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Saving...';
+                    }
+
+                    // Close first so UI does not get stuck if any later operation fails.
+                    closeWeeklyFoodModal();
+
+                    try {
+                        saveWeeklyFoodSelections(currentWeekId, choices);
+                        markWeeklyPromptShown(currentWeekId);
+                    } catch (error) {
+                        console.error('Failed to persist weekly food choices:', error);
+                    }
+
+                    fetch(`${ML_API_BASE}/weekly-selections`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            selected_food_names: choices
+                        })
+                    }).catch(function () {
+                        // Keep dashboard flow smooth if API is offline.
+                    }).finally(function () {
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Save Choices';
+                        }
+                    });
+                });
+            }
+
+            loadRecommendations();
+            initWeeklyFoodPrompt();
+        </script>
+    </body>
+</html>

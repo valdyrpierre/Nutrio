@@ -1,0 +1,517 @@
+/* Nutrio Settings - Original Design */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0a0a0a;
+    font-family: Arial, sans-serif;
+    color: white;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Custom page shimmer effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    animation: pageShimmer 4s infinite;
+    z-index: 5;
+    pointer-events: none;
+}
+
+@keyframes pageShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Header styling */
+header {
+    background-color: #1a1a1a;
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 2px solid #4CAF50;
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.12), transparent);
+    animation: headerMove 3s infinite;
+    z-index: 1;
+}
+
+@keyframes headerMove {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+header > * {
+    position: relative;
+    z-index: 2;
+}
+
+header h1 {
+    font-size: 2.4rem;
+    color: #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    animation: textGlow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes textGlow {
+    from {
+        text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+    }
+    to {
+        text-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+    }
+}
+
+/* Main container */
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    position: relative;
+}
+
+main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(156, 39, 176, 0.08), transparent);
+    animation: mainMove 5s infinite;
+    z-index: 1;
+}
+
+@keyframes mainMove {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+main > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Settings section styling */
+.settings {
+    background-color: #1a1a1a;
+    padding: 35px;
+    border-radius: 12px;
+    border: 2px solid #9C27B0;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #9C27B0, #7B1FA2, #9C27B0);
+    background-size: 200% 100%;
+    animation: topBorder 3s ease-in-out infinite;
+}
+
+@keyframes topBorder {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.settings h2 {
+    font-size: 2rem;
+    color: #9C27B0;
+    text-align: center;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Form styling */
+form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Settings buttons */
+button {
+    padding: 20px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(45deg, #666, #555);
+    border: 2px solid transparent;
+}
+
+/* Individual button colors */
+button:nth-child(1) {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
+    border-color: #2196F3;
+}
+
+button:nth-child(2) {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    border-color: #4CAF50;
+}
+
+button:nth-child(3) {
+    background: linear-gradient(45deg, #FF9800, #F57C00);
+    border-color: #FF9800;
+}
+
+button:nth-child(4) {
+    background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+    border-color: #9C27B0;
+}
+
+button:nth-child(5) {
+    background: linear-gradient(45deg, #607D8B, #455A64);
+    border-color: #607D8B;
+}
+
+button:nth-child(6) {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+    border-color: #f44336;
+}
+
+/* Button shimmer effect */
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+/* Button hover effects */
+button:nth-child(1):hover {
+    background: linear-gradient(45deg, #1976D2, #1565C0);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
+}
+
+button:nth-child(2):hover {
+    background: linear-gradient(45deg, #45a049, #3d8b40);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+}
+
+button:nth-child(3):hover {
+    background: linear-gradient(45deg, #F57C00, #E65100);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+}
+
+button:nth-child(4):hover {
+    background: linear-gradient(45deg, #7B1FA2, #6A1B99);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(156, 39, 176, 0.4);
+}
+
+button:nth-child(5):hover {
+    background: linear-gradient(45deg, #455A64, #37474F);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(96, 125, 139, 0.4);
+}
+
+button:nth-child(6):hover {
+    background: linear-gradient(45deg, #d32f2f, #c62828);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
+}
+
+/* Button active state */
+button:active {
+    transform: translateY(-1px);
+    animation: buttonPress 0.1s ease-out;
+}
+
+@keyframes buttonPress {
+    0% { transform: translateY(-3px) scale(1); }
+    50% { transform: translateY(-1px) scale(0.98); }
+    100% { transform: translateY(-3px) scale(1); }
+}
+
+/* Button icons (add icons using ::before pseudo-element) */
+button:nth-child(1)::after {
+    content: '👤';
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+button:nth-child(2)::after {
+    content: '🔒';
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+button:nth-child(3)::after {
+    content: '🔔';
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+button:nth-child(4)::after {
+    content: '🛡️';
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+button:nth-child(5)::after {
+    content: '❓';
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+button:nth-child(6)::after {
+    content: '🚪';
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+/* Settings grid for larger screens */
+@media (min-width: 600px) {
+    form {
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        max-width: 600px;
+    }
+    
+    button:nth-child(6) {
+        grid-column: 1 / -1;
+        max-width: 300px;
+        justify-self: center;
+    }
+}
+
+/* Settings section shimmer */
+.settings::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(156, 39, 176, 0.05), transparent);
+    animation: settingsShimmer 6s infinite;
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes settingsShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure content stays above shimmer */
+.settings > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Additional settings info */
+.settings-info {
+    background-color: #0f0f0f;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #9C27B0;
+    margin-top: 30px;
+    position: relative;
+}
+
+.settings-info p {
+    color: #cccccc;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    text-align: center;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.9rem;
+    }
+    
+    main {
+        padding: 18px 15px;
+    }
+    
+    .settings {
+        padding: 25px 20px;
+    }
+    
+    .settings h2 {
+        font-size: 1.6rem;
+    }
+    
+    button {
+        padding: 15px 20px;
+        font-size: 1rem;
+    }
+    
+    form {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 22px 15px;
+    }
+    
+    header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .settings {
+        padding: 20px 15px;
+    }
+    
+    .settings h2 {
+        font-size: 1.4rem;
+    }
+    
+    button {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    
+    button::after {
+        font-size: 1rem;
+    }
+    
+    form {
+        gap: 12px;
+    }
+}
+
+/* Page animations */
+body {
+    animation: pageAppear 0.7s ease-in;
+}
+
+@keyframes pageAppear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.settings {
+    animation: sectionAppear 0.9s ease-out 0.2s both;
+}
+
+@keyframes sectionAppear {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Button appear animation */
+button {
+    animation: buttonAppear 0.6s ease-out;
+}
+
+@keyframes buttonAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Stagger button animations */
+button:nth-child(1) { animation-delay: 0.1s; }
+button:nth-child(2) { animation-delay: 0.2s; }
+button:nth-child(3) { animation-delay: 0.3s; }
+button:nth-child(4) { animation-delay: 0.4s; }
+button:nth-child(5) { animation-delay: 0.5s; }
+button:nth-child(6) { animation-delay: 0.6s; }
+
+/* Accessibility */
+button:focus {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+/* Footer (if you add one) */
+footer {
+    background-color: #1a1a1a;
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    margin-top: 40px;
+    border-top: 1px solid #333;
+}
+
+footer p {
+    font-size: 0.9rem;
+}
+
+/* Loading state for buttons */
+button.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+button.loading::before {
+    animation: loadingShimmer 1.5s infinite;
+}
+
+@keyframes loadingShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}

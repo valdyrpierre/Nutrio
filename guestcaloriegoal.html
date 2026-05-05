@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="guestcaloriegoal.css">
+        <title>Nutrio - Guest Calorie Goal</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Nutrio</h1>
+            <img src="Nutrio_Logo.jpg" alt="Nutrio Logo">
+            <p>Welcome to Nutrio! Your journey to better health starts here.</p>
+        </header>
+        <main>
+            <h2>Thank you for using Nutrio!</h2>
+            <p>To help us determine your ideal calorie intake, please provide some information about yourself.</p>
+
+            <form action="guestinfo">
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" required min="1" max="120">
+                
+                <label for="height">Height (e.g., 5'8" or 68):</label>
+                <input type="text" id="height" name="height" required placeholder="5'8&quot; or 68">
+                
+                <label for="weight">Weight (lbs):</label>
+                <input type="number" id="weight" name="weight" required min="50" max="500">
+                
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                
+                <label for="activity">Activity Level:</label>
+                <select id="activity" name="activity" required>
+                    <option value="">Select Activity Level</option>
+                    <option value="sedentary">Sedentary (little/no exercise)</option>
+                    <option value="lightly_active">Lightly Active (light exercise 1-3 days/week)</option>
+                    <option value="moderately_active">Moderately Active (moderate exercise 3-5 days/week)</option>
+                    <option value="very_active">Very Active (hard exercise 6-7 days/week)</option>
+                    <option value="extremely_active">Extremely Active (very hard exercise, physical job)</option>
+                </select>
+                
+                <label for="goal">Goal:</label>
+                <select id="goal" name="goal" required>
+                    <option value="">Select Goal</option>
+                    <option value="maintain">Maintain Weight</option>
+                    <option value="lose_slow">Lose Weight (0.5 lbs/week)</option>
+                    <option value="lose_moderate">Lose Weight (1 lb/week)</option>
+                    <option value="lose_fast">Lose Weight (2 lbs/week)</option>
+                    <option value="gain_slow">Gain Weight (0.5 lbs/week)</option>
+                    <option value="gain_moderate">Gain Weight (1 lb/week)</option>
+                </select>
+                
+                <button type="submit">Calculate My Calorie Goal</button>
+            </form>
+
+            <div id="results" style="display: none; color: honeydew;">
+                <h3>Your Personalized Results:</h3>
+                <p><strong>Daily Calorie Goal:</strong> <span id="calorie-goal"></span> calories</p>
+                <p><strong>BMR (Base Metabolic Rate):</strong> <span id="bmr-display"></span> calories</p>
+                <p><strong>TDEE (Total Daily Energy Expenditure):</strong> <span id="tdee-display"></span> calories</p>
+                <div id="goal-explanation"></div>
+                <p>By creating an account you can save this information and get a personalized meal plan and workout suggestions.</p>
+                <p><strong>Create an account!</strong> <a href="createaccount.html" style="color: #4CAF50;">Sign Up</a></p>
+            </div>
+
+            <script>
+                // Function to parse height input (handles both "5'8\"" and "68" formats)
+                function parseHeight(heightInput) {
+                    heightInput = heightInput.trim();
+                    
+                    if (heightInput.includes("'")) {
+                        const parts = heightInput.split("'");
+                        const feet = parseInt(parts[0]);
+                        let inches = 0;
+                        
+                        if (parts[1]) {
+                            inches = parseInt(parts[1].replace(/[^0-9]/g, ''));
+                        }
+                        
+                        return (feet * 12) + (inches || 0);
+                    } else {
+                        return parseInt(heightInput);
+                    }
+                }
+
+                // Correct BMR calculation using Mifflin-St Jeor equation
+                function calculateBMR(age, heightInches, weightLbs, gender) {
+                    // Convert to metric (kg and cm) for accurate calculation
+                    const weightKg = weightLbs * 0.453592;
+                    const heightCm = heightInches * 2.54;
+                    
+                    let bmr;
+                    
+                    if (gender === 'male') {
+                        // BMR = 10 × weight(kg) + 6.25 × height(cm) - 5 × age(years) + 5
+                        bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
+                    } else if (gender === 'female') {
+                        // BMR = 10 × weight(kg) + 6.25 × height(cm) - 5 × age(years) - 161
+                        bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) - 161;
+                    } else {
+                        // For other/non-binary, use average of male and female formulas
+                        const maleBMR = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
+                        const femaleBMR = (10 * weightKg) + (6.25 * heightCm) - (5 * age) - 161;
+                        bmr = (maleBMR + femaleBMR) / 2;
+                    }
+                    
+                    return Math.round(bmr);
+                }
+
+                // Calculate TDEE (Total Daily Energy Expenditure)
+                function calculateTDEE(bmr, activityLevel) {
+                    const activityMultipliers = {
+                        'sedentary': 1.2,           // Little/no exercise
+                        'lightly_active': 1.375,    // Light exercise 1-3 days/week
+                        'moderately_active': 1.55,  // Moderate exercise 3-5 days/week
+                        'very_active': 1.725,       // Hard exercise 6-7 days/week
+                        'extremely_active': 1.9     // Very hard exercise, physical job
+                    };
+                    
+                    return Math.round(bmr * activityMultipliers[activityLevel]);
+                }
+
+                // Calculate final calorie goal based on weight goal
+                function calculateCalorieGoal(tdee, goal) {
+                    const goalAdjustments = {
+                        'maintain': 0,           // No change
+                        'lose_slow': -250,       // 0.5 lb/week (250 cal deficit)
+                        'lose_moderate': -500,   // 1 lb/week (500 cal deficit)
+                        'lose_fast': -1000,      // 2 lbs/week (1000 cal deficit)
+                        'gain_slow': 250,        // 0.5 lb/week (250 cal surplus)
+                        'gain_moderate': 500     // 1 lb/week (500 cal surplus)
+                    };
+                    
+                    const adjustment = goalAdjustments[goal] || 0;
+                    const finalCalories = tdee + adjustment;
+                    
+                    // Safety check: don't go below 1200 calories for women or 1500 for men
+                    const minCalories = 1200;
+                    
+                    return Math.max(finalCalories, minCalories);
+                }
+
+                // Get goal explanation text
+                function getGoalExplanation(goal, calorieDeficitSurplus) {
+                    const explanations = {
+                        'maintain': 'This calorie amount should help you maintain your current weight.',
+                        'lose_slow': `This creates a 250-calorie deficit per day, aiming for a healthy 0.5 lb weight loss per week.`,
+                        'lose_moderate': `This creates a 500-calorie deficit per day, aiming for 1 lb weight loss per week.`,
+                        'lose_fast': `This creates a 1000-calorie deficit per day, aiming for 2 lbs weight loss per week. This is aggressive - please consult a healthcare provider.`,
+                        'gain_slow': `This creates a 250-calorie surplus per day, aiming for 0.5 lb weight gain per week.`,
+                        'gain_moderate': `This creates a 500-calorie surplus per day, aiming for 1 lb weight gain per week.`
+                    };
+                    
+                    return explanations[goal] || '';
+                }
+
+                // Form submission handler
+                document.querySelector('form').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    // Get form values
+                    const age = parseInt(document.getElementById('age').value);
+                    const heightInput = document.getElementById('height').value;
+                    const height = parseHeight(heightInput);
+                    const weight = parseInt(document.getElementById('weight').value);
+                    const gender = document.getElementById('gender').value;
+                    const activity = document.getElementById('activity').value;
+                    const goal = document.getElementById('goal').value;
+
+                    // Validate inputs
+                    if (!age || !height || !weight || !gender || !activity || !goal) {
+                        alert('Please fill in all fields.');
+                        return;
+                    }
+
+                    if (age <= 0 || age > 120 || height <= 0 || weight <= 0) {
+                        alert('Please enter valid values for age (1-120), height, and weight.');
+                        return;
+                    }
+
+                    if (height < 36 || height > 96) {
+                        alert('Please enter a realistic height (3-8 feet).');
+                        return;
+                    }
+
+                    // Calculate BMR, TDEE, and final calorie goal
+                    const bmr = calculateBMR(age, height, weight, gender);
+                    const tdee = calculateTDEE(bmr, activity);
+                    const calorieGoal = calculateCalorieGoal(tdee, goal);
+                    
+                    // Display results
+                    document.getElementById('calorie-goal').textContent = calorieGoal;
+                    document.getElementById('bmr-display').textContent = bmr;
+                    document.getElementById('tdee-display').textContent = tdee;
+                    document.getElementById('goal-explanation').innerHTML = `<p><em>${getGoalExplanation(goal)}</em></p>`;
+                    document.getElementById('results').style.display = 'block';
+                    
+                    // Scroll to results
+                    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                    
+                    console.log('Calculation Results:', {
+                        age, height, weight, gender, activity, goal,
+                        bmr, tdee, calorieGoal
+                    });
+                });
+            </script>
+        </main>
+    </body>
+</html>

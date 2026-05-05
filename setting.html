@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <link rel="stylesheet" href="setting.css">
+        <title>Nutrio - Settings</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <header>
+            <h1>Nutrio - Settings</h1>
+        </header>
+        <main>
+            <section class="settings">
+                <h2>Account Settings</h2>
+                <form>
+                   <button type="button" onclick="location.href='profile.html';">My Account</button>
+                   <button type="button" onclick="location.href='privacy.html';">Privacy</button>
+                     <button type="button" onclick="location.href='help.html';">Help</button>
+                     <button type="button" onclick="logoutUser();">Logout</button>
+                </form>
+            </section>
+        </main>
+        <script>
+            function logoutUser() {
+                localStorage.removeItem('nutrioUser');
+                localStorage.removeItem('nutrioToken');
+                localStorage.removeItem('nutrioRefreshToken');
+                localStorage.removeItem('nutrio_user_id');
+                window.location.href = 'login.html';
+            }
+        </script>
+    </body> 
+</html>

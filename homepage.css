@@ -1,0 +1,372 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Full Page Shimmer Effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    animation: fullPageShimmer 4s infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes fullPageShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Header Styles */
+header {
+    background: linear-gradient(135deg, #2c3e50, #1a1a1a);
+    text-align: center;
+    padding: 40px 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Additional Header Shimmer for Enhanced Effect */
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.15), transparent);
+    animation: headerShimmer 3s infinite;
+    z-index: 1;
+}
+
+@keyframes headerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure header content is above shimmer */
+header > * {
+    position: relative;
+    z-index: 2;
+}
+
+header h1 {
+    font-size: 3rem;
+    color: #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+header img {
+    width: 120px;
+    height: auto;
+    margin: 20px 0;
+    border: 3px solid #4CAF50;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+header img:hover {
+    transform: scale(1.1);
+}
+
+header p {
+    font-size: 1.2rem;
+    color: #cccccc;
+    margin-top: 15px;
+    font-style: italic;
+}
+
+/* Main Content with Enhanced Background */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: linear-gradient(45deg, #1a1a1a, #2c3e50);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Main Section Shimmer */
+main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.1), transparent);
+    animation: mainShimmer 5s infinite;
+    z-index: 1;
+}
+
+@keyframes mainShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure main content is above shimmer */
+main > * {
+    position: relative;
+    z-index: 2;
+}
+
+main h2 {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 50px;
+    text-align: center;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Button Container */
+.button-container {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 3;
+}
+
+/* Enhanced Button Styles with Individual Shimmer */
+button {
+    padding: 15px 35px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    min-width: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Button Shimmer Effect */
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+/* Login Button */
+button[onclick*="login"] {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+}
+
+button[onclick*="login"]:hover {
+    background: linear-gradient(45deg, #45a049, #3d8b40);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* Create Account Button */
+button[onclick*="createaccount"] {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
+    color: white;
+}
+
+button[onclick*="createaccount"]:hover {
+    background: linear-gradient(45deg, #1976D2, #1565C0);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+/* Guest Button */
+button[onclick*="guest"] {
+    background: linear-gradient(45deg, #FF9800, #F57C00);
+    color: white;
+}
+
+button[onclick*="guest"]:hover {
+    background: linear-gradient(45deg, #F57C00, #EF6C00);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+/* Footer Styles with Shimmer */
+footer {
+    background: linear-gradient(135deg, #212121, #2c3e50);
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Footer Shimmer */
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(156, 39, 176, 0.15), transparent);
+    animation: footerShimmer 6s infinite;
+    z-index: 1;
+}
+
+@keyframes footerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Ensure footer content is above shimmer */
+footer > * {
+    position: relative;
+    z-index: 2;
+}
+
+footer p {
+    color: #cccccc;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+/* Contact Button */
+button[onclick*="contact"] {
+    background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+    color: white;
+    padding: 12px 25px;
+    font-size: 1rem;
+}
+
+button[onclick*="contact"]:hover {
+    background: linear-gradient(45deg, #7B1FA2, #6A1B9A);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+    }
+    
+    header img {
+        width: 100px;
+    }
+    
+    main h2 {
+        font-size: 2rem;
+    }
+    
+    .button-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    button {
+        width: 100%;
+        max-width: 250px;
+        padding: 18px 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 30px 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    header img {
+        width: 80px;
+    }
+    
+    main {
+        padding: 40px 15px;
+    }
+    
+    main h2 {
+        font-size: 1.8rem;
+        margin-bottom: 40px;
+    }
+    
+    button {
+        font-size: 1rem;
+        padding: 15px 25px;
+    }
+}
+
+/* Add smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced Page Load Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    animation: fadeIn 0.8s ease-in;
+}
+
+/* Additional Glow Effects */
+header h1 {
+    animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    from {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(76, 175, 80, 0.3);
+    }
+    to {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(76, 175, 80, 0.5);
+    }
+}
