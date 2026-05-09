@@ -192,6 +192,8 @@
                     favoriteCategories: [],
                     recentFoodIds: [],
                     recentFoodNames: [],
+                    preferredFoodIds: [],
+                    preferredFoodNames: [],
                     mealTypeCategoryBoosts: {
                         breakfast: ['fruits', 'grains', 'dairy'],
                         lunch: ['proteins', 'vegetables', 'grains'],
@@ -205,22 +207,30 @@
                 }
 
                 try {
-                    const { data, error } = await supabaseClient
-                        .from('food_logs')
-                        .select('food_id, meal_type, foods(name, category)')
-                        .eq('user_id', userId)
-                        .order('logged_at', { ascending: false })
-                        .limit(50);
+                    const [loggedFoodsResult, preferredFoodsResult] = await Promise.all([
+                        supabaseClient
+                            .from('food_logs')
+                            .select('food_id, meal_type, foods(name, category)')
+                            .eq('user_id', userId)
+                            .order('logged_at', { ascending: false })
+                            .limit(50),
+                        supabaseClient
+                            .from('food_preferences')
+                            .select('food_id, foods(id, name, category, calories)')
+                            .eq('user_id', userId)
+                    ]);
 
-                    if (error || !data) {
-                        return defaultProfile;
-                    }
+                    const loggedFoods = loggedFoodsResult.data || [];
+                    const preferredFoods = preferredFoodsResult.data || [];
+                    const storedPreferences = getStoredTopFoodPreferences();
 
                     const categoryCounts = {};
                     const recentFoodIds = [];
                     const recentFoodNames = [];
+                    const preferredFoodIds = new Set();
+                    const preferredFoodNames = new Set();
 
-                    data.forEach((entry) => {
+                    loggedFoods.forEach((entry) => {
                         const foodInfo = entry.foods || {};
                         const category = String(foodInfo.category || '').toLowerCase();
                         const foodName = String(foodInfo.name || '').toLowerCase();
@@ -238,6 +248,44 @@
                         }
                     });
 
+                    preferredFoods.forEach((entry) => {
+                        const foodInfo = entry.foods || {};
+                        const foodId = entry.food_id !== null && entry.food_id !== undefined
+                            ? String(entry.food_id)
+                            : '';
+                        const linkedFoodId = foodInfo.id !== null && foodInfo.id !== undefined
+                            ? String(foodInfo.id)
+                            : '';
+                        const foodName = String(foodInfo.name || '').toLowerCase();
+                        const category = String(foodInfo.category || '').toLowerCase();
+
+                        if (foodId) {
+                            preferredFoodIds.add(foodId);
+                        }
+
+                        if (linkedFoodId) {
+                            preferredFoodIds.add(linkedFoodId);
+                        }
+
+                        if (foodName) {
+                            preferredFoodNames.add(foodName);
+                        }
+
+                        if (category) {
+                            categoryCounts[category] = (categoryCounts[category] || 0) + 2;
+                        }
+                    });
+
+                    storedPreferences.forEach((entry) => {
+                        const storedFoodId = entry && entry.foodId !== null && entry.foodId !== undefined
+                            ? String(entry.foodId)
+                            : '';
+
+                        if (storedFoodId) {
+                            preferredFoodIds.add(storedFoodId);
+                        }
+                    });
+
                     const favoriteCategories = Object.entries(categoryCounts)
                         .sort((a, b) => b[1] - a[1])
                         .slice(0, 3)
@@ -247,11 +295,43 @@
                         ...defaultProfile,
                         favoriteCategories,
                         recentFoodIds,
-                        recentFoodNames
+                        recentFoodNames,
+                        preferredFoodIds: Array.from(preferredFoodIds),
+                        preferredFoodNames: Array.from(preferredFoodNames),
+                        source: preferredFoodIds.size > 0 ? 'saved-top-picks' : 'food-logs'
                     };
                 } catch (error) {
                     console.warn('Falling back to default recommendation profile:', error);
-                    return defaultProfile;
+                    const storedPreferences = getStoredTopFoodPreferences();
+                    return {
+                        ...defaultProfile,
+                        preferredFoodIds: storedPreferences
+                            .map((entry) => String(entry && entry.foodId !== undefined ? entry.foodId : ''))
+                            .filter(Boolean),
+                        source: storedPreferences.length > 0 ? 'local-saved-top-picks' : 'default'
+                    };
+                }
+            }
+
+            function getStoredTopFoodPreferences() {
+                try {
+                    const raw = localStorage.getItem('nutrio_top_food_preferences');
+                    if (!raw) {
+                        return [];
+                    }
+
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        return parsed;
+                    }
+
+                    if (parsed && Array.isArray(parsed.foodIds)) {
+                        return parsed.foodIds.map((foodId) => ({ foodId }));
+                    }
+
+                    return [];
+                } catch (error) {
+                    return [];
                 }
             }
 
@@ -281,8 +361,16 @@
                     score += 12;
                 }
 
+                if (userPreferenceProfile.preferredFoodIds.includes(String(food.id))) {
+                    score += 80;
+                }
+
                 if (userPreferenceProfile.recentFoodNames.includes(name)) {
                     score += 10;
+                }
+
+                if (userPreferenceProfile.preferredFoodNames.includes(name)) {
+                    score += 35;
                 }
 
                 return score;
@@ -304,6 +392,14 @@
 
                 if (mealTypeBoosts.includes(category)) {
                     reasons.push(`works well for ${mealType}`);
+                }
+
+                if (userPreferenceProfile.preferredFoodIds.includes(String(food.id))) {
+                    reasons.push('one of your saved top picks');
+                }
+
+                if (userPreferenceProfile.preferredFoodNames.includes(String(food.name || '').toLowerCase())) {
+                    reasons.push('matches your training choices');
                 }
 
                 return reasons.slice(0, 2).join(' • ') || 'recommended for balance and variety';
