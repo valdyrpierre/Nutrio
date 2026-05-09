@@ -189,12 +189,17 @@
                     if (
                         /column .* does not exist/i.test(error.message) ||
                         /could not find the .* column/i.test(error.message) ||
-                        /invalid input syntax for type bigint/i.test(error.message)
+                        /invalid input syntax for type bigint/i.test(error.message) ||
+                        /violates row-level security policy/i.test(error.message) ||
+                        /new row violates row-level security policy/i.test(error.message) ||
+                        /permission denied/i.test(error.message) ||
+                        /duplicate key value violates unique constraint/i.test(error.message)
                     ) {
                         continue;
                     }
 
-                    throw error;
+                    console.warn('Profile table insert skipped:', error.message);
+                    return false;
                 }
 
                 if (lastError) {
@@ -404,7 +409,11 @@
                                     throw new Error('Account was created, but no auth user was returned. Please try logging in.');
                                 }
 
-                                await saveProfileRecord(profilePayload, data.user.id);
+                                const profileSaved = await saveProfileRecord(profilePayload, data.user.id);
+
+                                if (!profileSaved) {
+                                    console.warn('Continuing with auth metadata only for this account.');
+                                }
 
                                 displayMessage('Account created successfully! Please check your email to confirm, then log in with your email address.', 'success');
                                 form.reset();
