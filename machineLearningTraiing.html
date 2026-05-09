@@ -283,7 +283,7 @@
             <div class="actions">
                 <button class="btn-primary" id="submitBtn">✅ Save Top 3</button>
                 <button class="btn-secondary" id="reloadBtn">🔄 Load New 10 Foods</button>
-                <a href="mealplan.html" class="btn-skip">Don't want to answer questions — take me to create meal plan</a>
+                <a href="createmealplan.html" class="btn-skip">Don't want to answer questions — take me to create meal plan</a>
             </div>
             <div class="status" id="statusMsg"></div>
         </div>
@@ -321,6 +321,18 @@
     function getCurrentUserId() {
         const user = JSON.parse(localStorage.getItem('nutrioUser') || 'null');
         return (user && user.id) ? user.id : null;
+    }
+
+    function saveTopFoodPreferencesLocally(picks) {
+        try {
+            localStorage.setItem('nutrio_top_food_preferences', JSON.stringify({
+                userId: uid,
+                foodIds: picks,
+                savedAt: new Date().toISOString()
+            }));
+        } catch (error) {
+            console.warn('Could not save local top-food preferences:', error);
+        }
     }
 
     // ── DOM refs ──
@@ -436,14 +448,24 @@
         setStatus('Saving your picks...');
 
         const rows = picks.map(food_id => ({ user_id: uid, food_id }));
+        saveTopFoodPreferencesLocally(picks);
 
         try {
-            const { error } = await db
+            const { error: deleteError } = await db
+                .from('food_preferences')
+                .delete()
+                .eq('user_id', uid);
+
+            if (deleteError) {
+                console.warn('Could not clear previous top picks:', deleteError);
+            }
+
+            const { error: insertError } = await db
                 .from('food_preferences')
                 .insert(rows);
 
-            if (error) {
-                setStatus(formatError(error, 'Could not save'), 'error');
+            if (insertError) {
+                setStatus(formatError(insertError, 'Could not save'), 'error');
                 return;
             }
 
