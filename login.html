@@ -14,8 +14,8 @@
     </header>
     <main>
         <form id="loginForm">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+            <label for="username">Email or Username:</label>
+            <input type="text" id="username" name="username" placeholder="Enter your email or username" required>
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>  
             <button type="submit">Login</button>
@@ -33,6 +33,42 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        async function lookupEmailByUsername(username) {
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('email')
+                .eq('username', username)
+                .maybeSingle();
+
+            if (error || !data || !data.email) {
+                return null;
+            }
+
+            return data.email;
+        }
+
+        async function loadProfileByAuthId(authUserId) {
+            const candidateColumns = ['auth_user_id', 'user_id', 'supabase_user_id', 'auth_id', 'id'];
+
+            for (const column of candidateColumns) {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('firstname,lastname,username,email,age,gender,height,weight,fitness_goal,activity_level')
+                    .eq(column, authUserId)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    return data;
+                }
+
+                if (error && !/column .* does not exist/i.test(error.message) && !/could not find the .* column/i.test(error.message) && !/invalid input syntax for type bigint/i.test(error.message)) {
+                    console.warn('Profile lookup failed on column', column, error.message);
+                }
+            }
+
+            return null;
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
@@ -48,17 +84,14 @@
                 // Look up the email associated with this username
                 let email = usernameInput;
                 if (!usernameInput.includes('@')) {
-                    const { data: profileData, error: lookupError } = await supabaseClient
-                        .from('users')
-                        .select('email')
-                        .eq('username', usernameInput)
-                        .maybeSingle();
+                    const lookedUpEmail = await lookupEmailByUsername(usernameInput);
 
-                    if (lookupError || !profileData) {
-                        alert('Username not found. Please check your username or use your email address.');
+                    if (!lookedUpEmail) {
+                        alert('Username lookup is unavailable for this account. Please use your email address to log in.');
                         return;
                     }
-                    email = profileData.email;
+
+                    email = lookedUpEmail;
                 }
 
                 // Sign in with Supabase Auth
@@ -72,17 +105,21 @@
                 const session = data.session;
                 const authUser = data.user;
 
-                // Fetch username from the users profile table
-                const { data: profile } = await supabaseClient
-                    .from('users')
-                    .select('username')
-                    .eq('id', authUser.id)
-                    .maybeSingle();
+                const profile = await loadProfileByAuthId(authUser.id);
+                const authMetadata = authUser.user_metadata || {};
 
                 localStorage.setItem('nutrioUser', JSON.stringify({
                     id: authUser.id,
-                    username: profile?.username || authUser.email,
-                    email: authUser.email
+                    username: profile?.username || authMetadata.username || authUser.email,
+                    email: profile?.email || authUser.email,
+                    firstname: profile?.firstname || authMetadata.firstname || '',
+                    lastname: profile?.lastname || authMetadata.lastname || '',
+                    age: profile?.age ?? authMetadata.age ?? null,
+                    gender: profile?.gender || authMetadata.gender || '',
+                    height: profile?.height ?? authMetadata.height ?? null,
+                    weight: profile?.weight ?? authMetadata.weight ?? null,
+                    fitness_goal: profile?.fitness_goal || authMetadata.fitness_goal || '',
+                    activity_level: profile?.activity_level || authMetadata.activity_level || ''
                 }));
                 localStorage.setItem('nutrioToken', session.access_token);
                 localStorage.setItem('nutrioRefreshToken', session.refresh_token);
