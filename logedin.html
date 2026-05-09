@@ -50,8 +50,9 @@
 
             <section class="ml-recommendations">
                 <h2>🤖 Food Recommendations</h2>
-                <p id="recommendation-status">Loading personalized recommendations...</p>
-                <ul id="recommendation-list"></ul>
+                <p id="recommendation-status" style="font-style: italic; color: #999;">Loading personalized recommendations...</p>
+                <ul id="recommendation-list" style="list-style-type: none; padding: 0;"></ul>
+                <p style="font-size: 0.9em; color: #666; margin-top: 10px;">💡 Recommendations are personalized based on your food selections. Start by logging your food choices!</p>
             </section>
             
             <section class="navigation">
@@ -86,14 +87,36 @@
             </section>
         </div>
 
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <script>
+            const SUPABASE_URL = 'https://chtwudgjgbyxtmnhpdqr.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             const ML_API_BASE = 'http://127.0.0.1:8000';
 
-            // Placeholder function for log food (to be implemented later)
-            function logfood() {
-                alert('Log Food feature coming soon! This will allow you to track your meals and calories.');
-                // Future: Navigate to food logging page
-                // location.href = 'logfood.html';
+            // Restore Supabase auth session from tokens saved during login
+            async function restoreSession() {
+                const accessToken = localStorage.getItem('nutrioToken');
+                const refreshToken = localStorage.getItem('nutrioRefreshToken');
+                if (accessToken) {
+                    await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || ''
+                    });
+                }
+            }
+
+            // Check if user is authenticated
+            async function ensureAuthenticated() {
+                await restoreSession();
+                const { data: authState } = await supabaseClient.auth.getUser();
+                const savedUser = localStorage.getItem('nutrioUser');
+                
+                if (!authState?.user && !savedUser) {
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
             }
 
             function getCurrentUserId() {
@@ -117,34 +140,47 @@
                 return 'local-user';
             }
 
-            async function loadRecommendations() {
+            async function loadRecommendations(retries = 3) {
                 const status = document.getElementById('recommendation-status');
                 const list = document.getElementById('recommendation-list');
                 const userId = getCurrentUserId();
 
-                try {
-                    const response = await fetch(`${ML_API_BASE}/recommendations?user_id=${encodeURIComponent(userId)}&limit=5`);
-                    if (!response.ok) {
-                        throw new Error('Failed to load recommendations');
-                    }
+                console.log('Loading recommendations for user:', userId);
 
-                    const data = await response.json();
-                    list.innerHTML = '';
+                for (let attempt = 1; attempt <= retries; attempt++) {
+                    try {
+                        const response = await fetch(`${ML_API_BASE}/recommendations?user_id=${encodeURIComponent(userId)}&limit=5`);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
 
-                    if (!data.recommendations || data.recommendations.length === 0) {
-                        status.textContent = 'No recommendations available yet.';
+                        const data = await response.json();
+                        console.log('Recommendations received:', data);
+                        list.innerHTML = '';
+
+                        if (!data.recommendations || data.recommendations.length === 0) {
+                            status.textContent = '📊 No personalized recommendations yet. Log your food choices to get started!';
+                            return;
+                        }
+
+                        data.recommendations.forEach(function (item) {
+                            const li = document.createElement('li');
+                            li.textContent = `${item.name} (${item.calories} cal) - ${item.category}`;
+                            list.appendChild(li);
+                        });
+
+                        status.textContent = `✅ Personalized recommendations (Model: ${data.model_version})`;
                         return;
+                    } catch (error) {
+                        console.warn(`Attempt ${attempt}/${retries} failed:`, error.message);
+                        if (attempt === retries) {
+                            status.textContent = '⚠️ Recommendations unavailable. Make sure the backend is running at http://127.0.0.1:8000';
+                            console.error('Final error:', error);
+                        } else {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
                     }
-
-                    data.recommendations.forEach(function (item) {
-                        const li = document.createElement('li');
-                        li.textContent = `${item.name} (${item.calories} cal) - ${item.category}`;
-                        list.appendChild(li);
-                    });
-
-                    status.textContent = `Model: ${data.model_version}`;
-                } catch (error) {
-                    status.textContent = 'Recommendation service is offline. Start the backend API to enable this.';
                 }
             }
 
@@ -253,8 +289,14 @@
                 });
             }
 
-            loadRecommendations();
-            initWeeklyFoodPrompt();
+            // Initialize page on load
+            document.addEventListener('DOMContentLoaded', async function() {
+                const isAuthenticated = await ensureAuthenticated();
+                if (isAuthenticated) {
+                    loadRecommendations();
+                    initWeeklyFoodPrompt();
+                }
+            });
         </script>
     </body>
 </html>
