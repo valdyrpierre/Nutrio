@@ -52,6 +52,10 @@
                 <h2>🤖 Food Recommendations</h2>
                 <p id="recommendation-status" style="font-style: italic; color: #999;">Loading personalized recommendations...</p>
                 <ul id="recommendation-list" style="list-style-type: none; padding: 0;"></ul>
+                <div id="recommendation-error" style="display: none; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 12px; margin-top: 10px; font-size: 0.9em;">
+                    <strong>🔧 Debug Info:</strong>
+                    <p id="error-details" style="margin: 5px 0; font-family: monospace; white-space: pre-wrap; word-break: break-word; color: #333;"></p>
+                </div>
                 <p style="font-size: 0.9em; color: #666; margin-top: 10px;">💡 Recommendations are personalized based on your food selections. Start by logging your food choices!</p>
             </section>
             
@@ -143,21 +147,32 @@
             async function loadRecommendations(retries = 3) {
                 const status = document.getElementById('recommendation-status');
                 const list = document.getElementById('recommendation-list');
+                const errorDiv = document.getElementById('recommendation-error');
+                const errorDetails = document.getElementById('error-details');
                 const userId = getCurrentUserId();
 
-                console.log('Loading recommendations for user:', userId);
+                console.log('🔍 Starting recommendations load...');
+                console.log('User ID:', userId);
+                console.log('API Base:', ML_API_BASE);
+                const url = `${ML_API_BASE}/recommendations?user_id=${encodeURIComponent(userId)}&limit=5`;
+                console.log('Full URL:', url);
 
                 for (let attempt = 1; attempt <= retries; attempt++) {
                     try {
-                        const response = await fetch(`${ML_API_BASE}/recommendations?user_id=${encodeURIComponent(userId)}&limit=5`);
+                        console.log(`Attempt ${attempt}/${retries}: Fetching from ${url}`);
+                        
+                        const response = await fetch(url);
+                        console.log(`Response status: ${response.status} ${response.statusText}`);
                         
                         if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
+                            const errorText = await response.text();
+                            throw new Error(`HTTP ${response.status}: ${errorText}`);
                         }
 
                         const data = await response.json();
-                        console.log('Recommendations received:', data);
+                        console.log('✅ Recommendations received:', data);
                         list.innerHTML = '';
+                        errorDiv.style.display = 'none';
 
                         if (!data.recommendations || data.recommendations.length === 0) {
                             status.textContent = '📊 No personalized recommendations yet. Log your food choices to get started!';
@@ -166,6 +181,7 @@
 
                         data.recommendations.forEach(function (item) {
                             const li = document.createElement('li');
+                            li.style.padding = '8px 0';
                             li.textContent = `${item.name} (${item.calories} cal) - ${item.category}`;
                             list.appendChild(li);
                         });
@@ -173,11 +189,16 @@
                         status.textContent = `✅ Personalized recommendations (Model: ${data.model_version})`;
                         return;
                     } catch (error) {
-                        console.warn(`Attempt ${attempt}/${retries} failed:`, error.message);
+                        const errorMsg = error.message || 'Unknown error';
+                        console.error(`❌ Attempt ${attempt}/${retries} failed:`, errorMsg);
+                        
                         if (attempt === retries) {
-                            status.textContent = '⚠️ Recommendations unavailable. Make sure the backend is running at http://127.0.0.1:8000';
-                            console.error('Final error:', error);
+                            status.textContent = '⚠️ Unable to load recommendations';
+                            errorDiv.style.display = 'block';
+                            errorDetails.textContent = `Error (Attempt ${attempt}/${retries}):\n${errorMsg}\n\nTroubleshooting:\n1. Is backend running at ${ML_API_BASE}?\n2. Try: dotnet run --project .\\ml_backend_cs\\NutrioMlApi.csproj\n3. Check browser console (F12) for more details`;
+                            console.error('Final error details:', error);
                         } else {
+                            console.log(`Retrying in 500ms...`);
                             await new Promise(resolve => setTimeout(resolve, 500));
                         }
                     }
@@ -291,12 +312,20 @@
 
             // Initialize page on load
             document.addEventListener('DOMContentLoaded', async function() {
+                console.log('🚀 Dashboard loading...');
                 const isAuthenticated = await ensureAuthenticated();
                 if (isAuthenticated) {
+                    console.log('✅ User authenticated');
                     loadRecommendations();
                     initWeeklyFoodPrompt();
+                } else {
+                    console.log('❌ User not authenticated');
                 }
             });
+
+            // Log user info on load
+            console.log('Current user from localStorage:', localStorage.getItem('nutrioUser'));
+            console.log('Backend API:', ML_API_BASE);
         </script>
     </body>
 </html>
