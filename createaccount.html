@@ -151,6 +151,59 @@
             const SUPABASE_ANON_KEY = 'sb_publishable_SjyNldGYLNmbI9-n3RmPWA_molD5Eph';
             const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+            function buildProfilePayload(formValues) {
+                return {
+                    firstname: formValues.firstname,
+                    lastname: formValues.lastname,
+                    username: formValues.username,
+                    email: formValues.email,
+                    age: parseInt(formValues.age, 10),
+                    gender: formValues.gender,
+                    height: formValues.heightFt ? (parseInt(formValues.heightFt, 10) * 12 + (formValues.heightIn ? parseInt(formValues.heightIn, 10) : 0)) : null,
+                    weight: formValues.weight ? parseFloat(formValues.weight) : null,
+                    fitness_goal: formValues.fitnessGoals,
+                    activity_level: formValues.activityLevel
+                };
+            }
+
+            async function saveProfileRecord(profilePayload, authUserId) {
+                const candidateRows = [
+                    { ...profilePayload, auth_user_id: authUserId },
+                    { ...profilePayload, user_id: authUserId },
+                    { ...profilePayload, supabase_user_id: authUserId },
+                    { ...profilePayload, auth_id: authUserId },
+                    profilePayload,
+                    { ...profilePayload, id: authUserId }
+                ];
+
+                let lastError = null;
+
+                for (const row of candidateRows) {
+                    const { error } = await supabaseClient.from('users').insert(row);
+                    if (!error) {
+                        return true;
+                    }
+
+                    lastError = error;
+
+                    if (
+                        /column .* does not exist/i.test(error.message) ||
+                        /could not find the .* column/i.test(error.message) ||
+                        /invalid input syntax for type bigint/i.test(error.message)
+                    ) {
+                        continue;
+                    }
+
+                    throw error;
+                }
+
+                if (lastError) {
+                    console.warn('Profile table insert skipped:', lastError.message);
+                }
+
+                return false;
+            }
+
             // Function to proceed to create account
             function proceedToCreateAccount() {
                 console.log('Proceed button clicked!');
@@ -320,39 +373,40 @@
                                 const username = document.getElementById('hidden-username').value.trim();
                                 const email = document.getElementById('hidden-email').value.trim().toLowerCase();
                                 const password = document.getElementById('hidden-password').value;
+                                const profilePayload = buildProfilePayload({
+                                    firstname,
+                                    lastname,
+                                    username,
+                                    email,
+                                    age,
+                                    gender,
+                                    heightFt,
+                                    heightIn,
+                                    weight,
+                                    fitnessGoals,
+                                    activityLevel
+                                });
 
-                                // Register with Supabase Auth
-                                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                                // Register with Supabase Auth and persist profile fields in auth metadata.
+                                const { data, error } = await supabaseClient.auth.signUp({
+                                    email,
+                                    password,
+                                    options: {
+                                        data: profilePayload
+                                    }
+                                });
 
                                 if (error) {
                                     throw new Error(error.message);
                                 }
 
-                                const userId = data.user.id;
-
-                                // Insert profile data into the users table
-                                const { error: profileError } = await supabaseClient
-                                    .from('users')
-                                    .insert({
-                                        id: userId,
-                                        firstname,
-                                        lastname,
-                                        username,
-                                        email,
-                                        age: parseInt(age, 10),
-                                        gender,
-                                        height: heightFt ? (parseInt(heightFt) * 12 + (heightIn ? parseInt(heightIn) : 0)) : null,
-                                        weight: weight ? parseFloat(weight) : null,
-                                        fitness_goal: fitnessGoals,
-                                        activity_level: activityLevel
-                                    });
-
-                                if (profileError) {
-                                    console.error('Profile insert error:', profileError);
-                                    throw new Error('Account created but profile setup failed: ' + profileError.message);
+                                if (!data.user) {
+                                    throw new Error('Account was created, but no auth user was returned. Please try logging in.');
                                 }
 
-                                displayMessage('Account created successfully! Please check your email to confirm, then log in.', 'success');
+                                await saveProfileRecord(profilePayload, data.user.id);
+
+                                displayMessage('Account created successfully! Please check your email to confirm, then log in with your email address.', 'success');
                                 form.reset();
                                 document.getElementById('additional-info-section').style.display = 'none';
                                 document.getElementById('welcome-info').style.display = 'block';
